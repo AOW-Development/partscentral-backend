@@ -1,0 +1,100 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  parent_id Int?      
+  parent    Category? @relation("CategoryToParent", fields: [parent_id], references: [id])
+  children  Category[] @relation("CategoryToParent")
+  products  Product[]
+}
+
+model Customer {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  password_hash String
+  full_name    String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  orders       Order[]
+}
+
+model Order {
+  id            Int        @id @default(autoincrement())
+  customer_id   Int
+  total_amount  Float
+  status        String
+  created_at    DateTime   @default(now())
+  customer      Customer   @relation(fields: [customer_id], references: [id])
+  items         OrderItem[]
+  payment       Payment?
+}
+
+model OrderItem {
+  order_id   Int
+  product_id Int
+  quantity   Int
+
+  order      Order   @relation(fields: [order_id], references: [id])
+  product    Product @relation(fields: [product_id], references: [id])
+
+  @@id([order_id, product_id])
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  order_id  Int      @unique
+  amount    Float
+  method    String
+  status    String
+  paid_at   DateTime?
+  order     Order    @relation(fields: [order_id], references: [id])
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  password_hash String
+  email        String   @unique
+  is_superuser Boolean
+  created_at   DateTime @default(now())
+}
+
+model Inventory {
+  product_id        Int   @id
+  quantity_in_stock Int
+  reorder_level     Int
+  product           Product @relation(fields: [product_id], references: [id])
+}
+
+model Product {
+  id              Int         @id @default(autoincrement())
+  make            String
+  model           String
+  part            String
+  sub_part        String
+  inStock         Boolean
+  description     String?
+  actualprice     Float
+  discountedPrice Float
+  img_url         String?
+  status          String?
+  miles           Int?
+  Availability    String?
+  categoryId      Int?
+  category        Category?   @relation(fields: [categoryId], references: [id])
+  orderItems      OrderItem[]
+  inventory       Inventory?
+}
+
+
+
+
+

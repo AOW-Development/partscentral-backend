@@ -1,0 +1,6 @@
+prisma orm has 3 tools : 
+
+client 
+query builder 
+studio
+

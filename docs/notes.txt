@@ -1,0 +1,98 @@
+Out of stock 
+add filter "refurbished" on product (reduce space betn table and top product info)
+
+
+
+data fields are 
+Maker
+Model
+ 
+
+
+
+NA data in db - show "Part Request" and "call now " button --> leads to ----> "contact form"
+show "cart added"  without making screen blur and non-interactive (pop should close on any mouse event / should not close if im hovering on it)
+added header delay ,  
+
+show "pa"
+
+
+
+
+Product table :
+
+id 
+make ex: ford
+model  - here multiple ex 500
+part : multiple part engine ,transmissio, 
+sub-part : multiple subpart
+inStock : boolean
+description 
+actualprice : 
+discountedPrice : 
+img_url
+status
+miles
+Availability
+
+
+Also there is going be realtiponship so ??
+
+description :
+
+mke 
+model 
+year
+part
+miles
+Genuine
+condition
+warrantya
+
+
+
+
+
+there are filters as well like , used , new , refurbushed , 
+
+Inventory :
+
+product_id
+email
+quantity_in_stock
+reorder_level
+
+
+customer :
+
+id
+email
+password_hash
+full_name
+created_at
+updated_at
+
+
+product :
+
+id
+
+
+Dynmo db - nosql
+rds - sql 
+aurora :  sql 
+lightsail mysql : this is not managed db right?? 
+
+should i use managed db like top 3 mentioned here.
+
+so which one is simple to use here and . 
+would i need ORM in all of that ?? or which one is easy to use here and i dont need to write ORM , or kind of managed ORM ??
+why not use DynmoDB i know it is doc. store but would it work here , or i should i go for sql db like rds or aurora ??
+
+
+also if i go for sql which one i choose aurora or rds ??
+
+-----------------------------------------------------------------------
+what is prisma orm ??
+
+is this workig 
