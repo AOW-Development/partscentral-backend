@@ -74,24 +74,81 @@ model Inventory {
   product           Product @relation(fields: [product_id], references: [id])
 }
 
+model Make {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  models  Model[]
+}
+
+model Model {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  makeId  Int
+  make    Make     @relation(fields: [makeId], references: [id])
+  modelYears ModelYear[]
+  @@unique([name, makeId])
+}
+
+model Year {
+  id      Int      @id @default(autoincrement())
+  value   String   @unique
+  modelYears ModelYear[]
+}
+
+model ModelYear {
+  id      Int     @id @default(autoincrement())
+  modelId Int
+  yearId  Int
+  model   Model   @relation(fields: [modelId], references: [id])
+  year    Year    @relation(fields: [yearId], references: [id])
+  products Product[]
+  @@unique([modelId, yearId])
+}
+
+model PartType {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  subParts SubPart[]
+  products Product[]
+}
+
+model SubPart {
+  id         Int      @id @default(autoincrement())
+  name       String
+  partTypeId Int
+  partType   PartType @relation(fields: [partTypeId], references: [id])
+  products   Product[] @relation("ProductSubParts")
+  @@unique([name, partTypeId])
+}
+
 model Product {
   id              Int         @id @default(autoincrement())
-  make            String
-  model           String
-  part            String
-  sub_part        String
+  sku             String      @unique
+  modelYearId     Int
+  partTypeId      Int
   inStock         Boolean
   description     String?
-  actualprice     Float
-  discountedPrice Float
-  img_url         String?
+  actualprice     Float?
+  discountedPrice Float?
   status          String?
-  miles           Int?
+  miles           String?
   Availability    String?
+  warranty        String?
   categoryId      Int?
   category        Category?   @relation(fields: [categoryId], references: [id])
   orderItems      OrderItem[]
   inventory       Inventory?
+  modelYear       ModelYear   @relation(fields: [modelYearId], references: [id])
+  partType        PartType    @relation(fields: [partTypeId], references: [id])
+  images          ProductImage[]
+  subParts        SubPart[]   @relation("ProductSubParts")
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  url       String
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 
