@@ -96,3 +96,18 @@ also if i go for sql which one i choose aurora or rds ??
 what is prisma orm ??
 
 is this workig 
+
+  curl "http://localhost:3001/api/products?make=Ford&model=Raptor&year=1996&part=Engine"
+  curl "http://localhost:3001/api/products"
+
+   npx ts-node src/import-data.ts
+  738  npx ts-node src/server.ts
+  npx prisma generate
+   npx ts-node src/import-data.ts
+
+   npx prisma generate
+  666  npx prisma migrate dev --name add-uniques
+  667  npm install --save-dev @types/connect
+  tsc
+node dist/server.js
+npx nodemon src/server.ts
