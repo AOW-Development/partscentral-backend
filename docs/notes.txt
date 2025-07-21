@@ -110,4 +110,94 @@ is this workig
   667  npm install --save-dev @types/connect
   tsc
 node dist/server.js
-npx nodemon src/server.ts
+npx nodemon src/server.ts  === start server
+
+
+# generate prism migration 
+npx prisma migrate dev --name init
+
+# create db without migration history and push schema
+npx prisma db push
+
+
+
+intern777@DESKTOP-AEOD4OS:~$ curl "http://localhost:3001/api/products/grouped-with-subparts?make=Ford&model=Explorer&year=2004&part=Engine" -H "Accept: application/json" | jq
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   634  100   634    0     0   8174      0 --:--:-- --:--:-- --:--:--  8453
+{
+  "make": "Ford",
+  "model": "Explorer",
+  "year": "2004",
+  "part": "Engine",
+  "subParts": [
+    {
+      "id": 736,
+      "name": "4.6L (VIN W, 8th digit)",
+      "partTypeId": 1
+    },
+    {
+      "id": 747,
+      "name": "4.0L (SOHC), VIN E (8th digit), Sport Trac, 4x2",
+      "partTypeId": 1
+    },
+    {
+      "id": 748,
+      "name": "4.0L (SOHC), VIN E (8th digit), Sport Trac, 4x4",
+      "partTypeId": 1
+    },
+    {
+      "id": 749,
+      "name": "4.0L (SOHC), VIN E (8th digit), exc. Sport Trac",
+      "partTypeId": 1
+    },
+    {
+      "id": 750,
+      "name": "4.0L (SOHC), VIN K (8th digit), Sport Trac, 4x2",
+      "partTypeId": 1
+    },
+    {
+      "id": 751,
+      "name": "4.0L (SOHC), VIN K (8th digit), Sport Trac, 4x4",
+      "partTypeId": 1
+    },
+    {
+      "id": 752,
+      "name": "4.0L (SOHC), VIN K (8th digit), exc. Sport Trac",
+      "partTypeId": 1
+    }
+  ]
+}
+
+So here lets sey i click on single product . takes to /product/engines so here replace :
+
+laod options from all subpart - names of response .
+ NAME ENGINE ASSEMBLY = make model year
+Option: 4.9L | from 2/3/91 (AIR inner manifold) | E4OD transmission  === subPart name of that product .
+
+load in Description table from response : 
+make 
+model
+year
+part = make model year part 
+
+
+so how would you do thsi here . would you make a new request by sku id of product when clicked on product card
+
+
+  999  clear
+ 1000  curl "http://localhost:3001/api/products?make=Ford&model=Aerostar&year=1990&part=Engine" -H "Accept: application/json" | jq
+ 1001  curl "http://localhost:3001/api/products"
+ 1002  curl "http://localhost:3001/api/products?make=Ford&model=Aerostar&year=1990&part=Engine" -H "Accept: application/json" | jq
+ 1003  curl "http://localhost:3001/api/products?make=Ford&model=contour&year=1999&part=Engine" -H "Accept: application/json" | jq
+ 1004  clear
+ 1005  curl "http://localhost:3001/api/products/with-subparts?make=Ford&model=Contour&year=1999&part=Engine" -H "Accept: application/json" | jq
+ 1006  curl "http://localhost:3001/api/products/grouped-with-subparts?make=Ford&model=Contour&year=1999&part=Engine" -H "Accept: application/json" | jq
+ 1007  curl "http://localhost:3001/api/products/grouped-with-subparts?make=Ford&model=Explorer&year=2004&part=Engine" -H "Accept: application/json" | jq
+ 1008  curl "http://localhost:3001/api/products/with-subparts?make=Ford&model=Contour&year=1999&part=Engine" -H "Accept: application/json" | jq
+ 1009  curl "http://localhost:3001/api/products/with-subparts?make=Ford&model=Aerostar&year=1990&part=Engine" -H "Accept: application/json" | jq
+ 1010  curl "http://localhost:3001/api/products/with-subparts?make=Ford&model=Contour&year=1999&part=Engine" -H "Accept: application/json" | jq
+ 1011  curl "http://localhost:3001/api/products/with-subparts?make=Ford&model=F-150&year=2002&part=Engine" -H "Accept: application/json" | jq
+ 1012  curl "http://localhost:3001/api/products/grouped-with-subparts?make=Ford&model=Explorer&year=2004&part=Engine" -H "Accept: application/json" | jq
+ 1013  curl "http://localhost:3001/api/products/with-subparts?make=Ford&model=Contour&year=1999&part=Engine" -H "Accept: application/json" | jq
+ 1014  history

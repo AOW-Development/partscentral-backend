@@ -55,17 +55,14 @@ async function main() {
       update: {},
     });
 
-    // 6. Upsert SubParts (can be comma-separated)
-    const subPartNames = row.subPart.split(',').map(s => s.trim());
-    const subParts = [];
-    for (const subName of subPartNames) {
-      const subPart = await prisma.subPart.upsert({
-        where: { name_partTypeId: { name: subName, partTypeId: partType.id } },
-        create: { name: subName, partTypeId: partType.id },
-        update: {},
-      });
-      subParts.push(subPart);
-    }
+    // 6. Upsert SubParts (do NOT split by comma, use full string)
+    const subPartName = row.subPart.trim();
+    const subPart = await prisma.subPart.upsert({
+      where: { name_partTypeId: { name: subPartName, partTypeId: partType.id } },
+      create: { name: subPartName, partTypeId: partType.id },
+      update: {},
+    });
+    const subParts = [subPart];
 
     const generatedSku = [
       String(row.make),
