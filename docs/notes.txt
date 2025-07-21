@@ -201,3 +201,7 @@ so how would you do thsi here . would you make a new request by sku id of produc
  1012  curl "http://localhost:3001/api/products/grouped-with-subparts?make=Ford&model=Explorer&year=2004&part=Engine" -H "Accept: application/json" | jq
  1013  curl "http://localhost:3001/api/products/with-subparts?make=Ford&model=Contour&year=1999&part=Engine" -H "Accept: application/json" | jq
  1014  history
+
+
+npx ts-node src/server.ts
+curl "http://localhost:3001/api/products/years?make=Ford&model=Aerostar"

@@ -39,6 +39,17 @@ exports.getProductsWithSubPartsByVehicle = async ({ make, model, year, part }: V
       images: true,
       inventory: true,
       subParts: true, // include subParts in the result
+      modelYear: {
+        include: {
+          model: {
+            include: {
+              make: true
+            }
+          },
+          year: true
+        }
+      },
+      partType: true
     }
   });
 };
