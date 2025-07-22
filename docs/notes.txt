@@ -110,6 +110,7 @@ is this workig
   667  npm install --save-dev @types/connect
   tsc
 node dist/server.js
+
 npx nodemon src/server.ts  === start server
 
 
@@ -118,6 +119,8 @@ npx prisma migrate dev --name init
 
 # create db without migration history and push schema
 npx prisma db push
+
+# remove trailing space 
 
 
 
@@ -205,3 +208,151 @@ so how would you do thsi here . would you make a new request by sku id of produc
 
 npx ts-node src/server.ts
 curl "http://localhost:3001/api/products/years?make=Ford&model=Aerostar"
+
+
+There is something wrong with column "inStock" it is setting false here : intern777@DESKTOP-AEOD4OS:~$ curl "http://localhost:3001/api/products/with-subparts?make=Ford&model=500&year=2005&part=transmission" -H "Accept: application/
+json" | jq
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1835  100  1835    0     0  48955      0 --:--:-- --:--:-- --:--:-- 50972
+[
+  {
+    "id": 2726,
+    "sku": "FORD-500-2005-TRANSMISSION-AT,(3.0L),6SPEED(TRANSCODEBONCERTIFICATIONLABEL)",
+    "modelYearId": 1,
+    "partTypeId": 2,
+    "inStock": false,
+    "description": null,
+    "actualprice": 1680,
+    "discountedPrice": 1530,
+    "status": null,
+    "miles": "80k",
+    "Availability": null,
+    "warranty": null,
+    "categoryId": null,
+    "images": [],
+    "inventory": null,
+    "subParts": [
+      {
+        "id": 1273,
+        "name": "AT, (3.0L), 6 speed (trans code B on certification label)",
+        "partTypeId": 2
+      }
+    ],
+    "modelYear": {
+      "id": 1,
+      "modelId": 1,
+      "yearId": 1,
+      "model": {
+        "id": 1,
+        "name": "500",
+        "makeId": 1,
+        "make": {
+          "id": 1,
+          "name": "Ford"
+        }
+      },
+      "year": {
+        "id": 1,
+        "value": "2005"
+      }
+    },
+    "partType": {
+      "id": 2,
+      "name": "Transmission"
+    }
+  },
+  {
+    "id": 2727,
+    "sku": "FORD-500-2005-TRANSMISSION-AT,(3.0L),CVT(TRANSCODEAONCERTIFICATIONLABEL),AWD",
+    "modelYearId": 1,
+    "partTypeId": 2,
+    "inStock": false,
+    "description": null,
+    "actualprice": 2610,
+    "discountedPrice": 2460,
+    "status": null,
+    "miles": "70k",
+    "Availability": null,
+    "warranty": null,
+    "categoryId": null,
+    "images": [],
+    "inventory": null,
+    "subParts": [
+      {
+        "id": 1274,
+        "name": "AT, (3.0L), CVT (trans code A on certification label), AWD",
+        "partTypeId": 2
+      }
+    ],
+    "modelYear": {
+      "id": 1,
+      "modelId": 1,
+      "yearId": 1,
+      "model": {
+        "id": 1,
+        "name": "500",
+        "makeId": 1,
+        "make": {
+          "id": 1,
+          "name": "Ford"
+        }
+      },
+      "year": {
+        "id": 1,
+        "value": "2005"
+      }
+    },
+    "partType": {
+      "id": 2,
+      "name": "Transmission"
+    }
+  },
+  {
+    "id": 2728,
+    "sku": "FORD-500-2005-TRANSMISSION-AT,(3.0L),CVT(TRANSCODEAONCERTIFICATIONLABEL),FWD",
+    "modelYearId": 1,
+    "partTypeId": 2,
+    "inStock": false,
+    "description": null,
+    "actualprice": 2025,
+    "discountedPrice": 1875,
+    "status": null,
+    "miles": "70k",
+    "Availability": null,
+    "warranty": null,
+    "categoryId": null,
+    "images": [],
+    "inventory": null,
+    "subParts": [
+      {
+        "id": 1275,
+        "name": "AT, (3.0L), CVT (trans code A on certification label), FWD",
+        "partTypeId": 2
+      }
+    ],
+    "modelYear": {
+      "id": 1,
+      "modelId": 1,
+      "yearId": 1,
+      "model": {
+        "id": 1,
+        "name": "500",
+        "makeId": 1,
+        "make": {
+          "id": 1,
+          "name": "Ford"
+        }
+      },
+      "year": {
+        "id": 1,
+        "value": "2005"
+      }
+    },
+    "partType": {
+      "id": 2,
+      "name": "Transmission"
+    }
+  }
+]
+intern777@DESKTOP-AEOD4OS:~$ But as you can see in excel sheeet img inStack is suppose to be true .??

@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 const prisma = new PrismaClient();
 
 async function main() {
-  const wb = XLSX.readFile('Ford.xlsx');
+  const wb = XLSX.readFile('transmission.xlsx');
   const rows = XLSX.utils.sheet_to_json<{
     make: string;
     model: string;
@@ -79,7 +79,7 @@ async function main() {
         sku: generatedSku,
         modelYear: { connect: { id: modelYear.id } },
         partType: { connect: { id: partType.id } },
-        inStock: row.inStock === 'YES',
+        inStock: row.inStock === 'Yes',
         actualprice: Number(row.actualPrice),
         discountedPrice: Number(row.discountedPrice),
         miles: row.miles ? String(row.miles) : null,
@@ -88,7 +88,7 @@ async function main() {
         },
       },
       update: {
-        inStock: row.inStock === 'YES',
+        inStock: row.inStock === 'Yes',
         actualprice: Number(row.actualPrice),
         discountedPrice: Number(row.discountedPrice),
         miles: row.miles ? String(row.miles) : null,
