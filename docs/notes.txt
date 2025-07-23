@@ -356,3 +356,60 @@ json" | jq
   }
 ]
 intern777@DESKTOP-AEOD4OS:~$ But as you can see in excel sheeet img inStack is suppose to be true .??
+
+-------------------------------
+
+add otp option in registration
+
+-----------------
+Implement Oauth
+Implement middleware
+Implement Search 
+Implement recently viewed
+Implement added cart popUp
+Deploy
+added all form validation
+Implement cart dynamic logic
+Implement product flow added to cart-->popUp-->product shows in cart-->
+
+
+-------------------------------------
+implement Oauth :
+
+authentication
+impemetn session managemnet 
+
+
+Implement Oauth for signin signup . would you use "next-auth" for this .
+also to manage this how would you use middleware for auth logic, also session-managemnet to manage-session also cookies to store data.
+would you be writing this be frontend side or backend side.
+secure client side pages here.which pages will you be securing here: payment cart profile 
+here 2 ways to authenticate user :
+1) using email+password aftether otp conformation.
+2) using Oatuh where user can logIn using google and store jwt in mysql db which already integrated just need to create table in prisma schema file (also for this what table needs to created in db)
+
+protect api routes.
+implement logout mechanism .
+
+---------------------------------------------------------------------
+
+
+autosq     
+
+route.ts
+provider
+prisma
+
+api.ts
+
+
+
+database
+3 table - customer ,account ,session
+
+authController
+authMiddleware
+prisma.ts
+
+----------------------------------------
+

@@ -1,9 +1,10 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// import { prisma } from './prisma';
+
+import { prisma } from './prisma';
 
 type VehicleQuery = { make: string; model: string; year: string; part: string };
 
-exports.getProductsByVehicle = async ({ make, model, year, part }: VehicleQuery) => {
+export const getProductsByVehicle = async ({ make, model, year, part }: VehicleQuery) => {
   return prisma.product.findMany({
     where: {
       modelYear: {
@@ -23,7 +24,7 @@ exports.getProductsByVehicle = async ({ make, model, year, part }: VehicleQuery)
   });
 };
 
-exports.getProductsWithSubPartsByVehicle = async ({ make, model, year, part }: VehicleQuery) => {
+export const getProductsWithSubPartsByVehicle = async ({ make, model, year, part }: VehicleQuery) => {
   return prisma.product.findMany({
     where: {
       modelYear: {
@@ -54,7 +55,7 @@ exports.getProductsWithSubPartsByVehicle = async ({ make, model, year, part }: V
   });
 };
 
-exports.getGroupedProductWithSubParts = async ({ make, model, year, part } : VehicleQuery) => {
+export const getGroupedProductWithSubParts = async ({ make, model, year, part } : VehicleQuery) => {
   const products = await prisma.product.findMany({
     where: {
       modelYear: {
