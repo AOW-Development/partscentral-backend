@@ -1,8 +1,27 @@
 import { Request, Response } from 'express';
-import { prisma } from '../services/prisma';
+import { PrismaClient } from '@prisma/client';
 import { hash, compare } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { generateOTP, sendOTPEmail } from '../utils/otp';
+
+interface RegisterBody {
+  email: string;
+  password: string;
+  full_name: string;
+}
+
+interface LoginBody {
+  email: string;
+  password: string;
+  otp?: string;
+}
+
+interface VerifyOTPBody {
+  email: string;
+  otp: string;
+}
+
+const prisma = new PrismaClient();
 
 // Ensure Prisma is properly initialized
 prisma.$connect().catch((err: Error) => {
@@ -10,7 +29,7 @@ prisma.$connect().catch((err: Error) => {
   process.exit(1);
 });
 
-export const register = async (req: Request, res: Response) => {
+const register = async (req: Request & { body: RegisterBody }, res: Response) => {
   try {
     const { email, password, full_name } = req.body;
 
@@ -46,7 +65,7 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+const login = async (req: Request & { body: LoginBody }, res: Response) => {
   try {
     const { email, password, otp } = req.body;
 
@@ -93,7 +112,7 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const verifyOTP = async (req: Request, res: Response) => {
+const verifyOTP = async (req: Request & { body: VerifyOTPBody }, res: Response) => {
   try {
     const { email, otp } = req.body;
 
@@ -125,46 +144,112 @@ export const verifyOTP = async (req: Request, res: Response) => {
   }
 };
 
-export const googleAuth = async (req: Request, res: Response) => {
+const { OAuth2Client } = require('google-auth-library');
+
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  'http://localhost:3001/api/auth/google/callback'
+);
+
+const googleAuth = async (req: Request & { query?: { code?: string } }, res: Response) => {
   try {
-    const { token } = req.body; // Google OAuth token
+    const { code } = req.query;
+    
+    if (!code) {
+      // Initial Google OAuth request
+      const authUrl = googleClient.generateAuthUrl({
+        access_type: 'offline',
+        scope: [
+          'https://www.googleapis.com/auth/userinfo.profile',
+          'https://www.googleapis.com/auth/userinfo.email',
+        ],
+      });
+      return res.redirect(authUrl);
+    }
 
-    // Verify Google token and get user info
-    // Implement Google token verification here
+    // Exchange code for tokens
+    const { tokens } = await googleClient.getToken(code as string);
+    googleClient.setCredentials(tokens);
 
-    const email = 'user@example.com'; // Get from Google token
-    const name = 'User Name'; // Get from Google token
+    // Get user info using access token
+    const userInfo = await googleClient.request({
+      url: 'https://www.googleapis.com/oauth2/v3/userinfo',
+    });
+
+    const { email, name, picture } = userInfo.data as { email: string; name: string; picture: string };
 
     let user = await prisma.customer.findUnique({
       where: { email },
     });
 
     if (!user) {
+      // Create new user if they don't exist
       user = await prisma.customer.create({
         data: {
           email,
           full_name: name,
+          image: picture,
           emailVerified: new Date(),
+          accounts: {
+            create: {
+              provider: 'google',
+              providerAccountId: email,
+              type: 'oauth',
+              access_token: tokens.access_token,
+              refresh_token: tokens.refresh_token,
+              expires_at: tokens.expiry_date ? Math.floor(tokens.expiry_date / 1000) : undefined,
+            },
+          },
+        },
+        include: {
+          accounts: true,
+        },
+      });
+    } else {
+      // Update existing user's Google account info
+      await prisma.account.upsert({
+        where: {
+          provider_providerAccountId: {
+            provider: 'google',
+            providerAccountId: email,
+          },
+        },
+        update: {
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_at: tokens.expiry_date ? Math.floor(tokens.expiry_date / 1000) : undefined,
+        },
+        create: {
+          customerId: user.id,
+          provider: 'google',
+          providerAccountId: email,
+          type: 'oauth',
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          expires_at: tokens.expiry_date ? Math.floor(tokens.expiry_date / 1000) : undefined,
         },
       });
     }
 
+    // Generate JWT token for our API
     const jwtToken = sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
 
-    return res.json({
-      token: jwtToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-      },
-    });
+    // Redirect to frontend with token
+    return res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${jwtToken}`);
   } catch (error) {
     console.error('Google auth error:', error);
-    return res.status(500).json({ message: 'Server error' });
+    return res.redirect(`${process.env.FRONTEND_URL}/auth/error`);
   }
+};
+
+module.exports = {
+  register,
+  login,
+  verifyOTP,
+  googleAuth,
 };
