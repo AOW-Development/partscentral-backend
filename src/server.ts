@@ -4,9 +4,15 @@ const cors = require('cors');
 
 const app = express();
 
+const FRONTEND_URL =
+  process.env.NODE_ENV === 'production'
+    ? 'https://partscentral.us'
+    : 'http://localhost:3000';
+
+
 // Configure CORS with specific options
 app.use(cors({
-  origin: 'http://localhost:3000', // Your frontend URL
+  origin: FRONTEND_URL, // Your frontend URL
   credentials: true, // Allow credentials (cookies, auth headers)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
   allowedHeaders: ['Content-Type', 'Authorization'] // Allowed headers
