@@ -79,7 +79,7 @@ async function main() {
         sku: generatedSku,
         modelYear: { connect: { id: modelYear.id } },
         partType: { connect: { id: partType.id } },
-        inStock: row.inStock === 'Yes',
+        inStock: row.inStock === 'Yes' ,
         actualprice: Number(row.actualPrice),
         discountedPrice: Number(row.discountedPrice),
         miles: row.miles ? String(row.miles) : null,

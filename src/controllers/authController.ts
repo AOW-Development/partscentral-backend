@@ -4,6 +4,8 @@ import { hash, compare } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { generateOTP, sendOTPEmail } from '../utils/otp';
 
+const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL!;
+
 interface RegisterBody {
   email: string;
   password: string;
@@ -149,7 +151,7 @@ const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  'http://localhost:3001/api/auth/google/callback'
+  CALLBACK_URL
 );
 
 const googleAuth = async (req: Request & { query?: { code?: string } }, res: Response) => {
@@ -247,9 +249,24 @@ const googleAuth = async (req: Request & { query?: { code?: string } }, res: Res
   }
 };
 
+const getProfile = async (req: Request, res: Response) => {
+  if(!req.user) return res.status(401).json({ message: 'Unauthorized' });
+  const userId = req.user.userId; // set by JWT middleware
+  const user = await prisma.customer.findUnique({ where: { id: userId } });
+  if (!user) return res.status(404).json({ message: 'User not found' });
+  res.json({
+    id: user.id,
+    email: user.email,
+    full_name: user.full_name,
+    image: user.image,
+    emailVerified: user.emailVerified,
+  });
+};
+
 module.exports = {
   register,
   login,
   verifyOTP,
   googleAuth,
+  getProfile,
 };

@@ -123,6 +123,53 @@ npx prisma db push
 # remove trailing space 
 
 
+# remove prisma migration Err
+npx prisma migrate dev --name init --create-only
+npx prisma migrate deploy
+npx prisma migrate reset
+npx prisma migrate dev --name init
+cd prisma
+rm -rf migrations/
+
+# match prisma schema to db BUT at cost of migration history , it does not create migration history or migration files
+ npx prisma db push 
+
+# Mark a broken/old init as already applied (prism will stop reapplying it against a new db)
+npx prisma migrate resolve --applied 20250723114628_init
+
+# reapply all migration marked --applied , generating new migration here 
+npx prisma migrate dev --name <give_name_here>
+
+# this spins up new  empty shadow  db and applies initial migration , diff new changes and scaffflod new folder and applies that changes to dev db
+npx prisma migrate dev --name describe_your_change
+
+# generate fresh sql script of db for migration history from blank db to reach current state of db 
+npx prisma migrate diff \
+  --from-empty \
+  --to-schema-datamodel=prisma/schema.prisma \
+  --script \
+> prisma/migrations/20250727_initial_baseline/steps.sql
+
+
+# dump data in sql file and create a new db + re-create clean init migration + re-load data + continue with migration
+
+mysqldump \
+  --no-create-info \
+  --skip-triggers \
+  --skip-add-locks \
+  --skip-disable-keys \
+  partscentral \
+> data-only.sql
+
+# in your mysql shell
+DROP DATABASE IF EXISTS partscentral;
+CREATE DATABASE partscentral CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+npx prisma migrate dev --name init
+mysql partscentral < data-only.sql
+npx prisma migrate dev --name describe_your_change
+
+
 
 intern777@DESKTOP-AEOD4OS:~$ curl "http://localhost:3001/api/products/grouped-with-subparts?make=Ford&model=Explorer&year=2004&part=Engine" -H "Accept: application/json" | jq
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
@@ -414,3 +461,20 @@ prisma.ts
 ----------------------------------------
  cors ?? 
   
+
+  -------------------------
+frontend env
+# NEXT_PUBLIC_API_URL=http://localhost:3001/api
+# NEXTAUTH_URL=http://localhost:3000
+
+# in production do should be 
+# NEXT_PUBLIC_API_URL=/api
+ 
+ backend env file : 
+
+# .env
+# NODE_ENV=production
+
+# FRONTEND_URL=https://partscentral.us
+# (prod) authController : 
+# GOOGLE_CALLBACK_URL=https://partscentral.us/api/auth/google/callback
