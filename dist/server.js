@@ -1,6 +1,8 @@
 "use strict";
 const express = require('express');
 const productRoutes = require('./routes/productRoutes');
+// const authRoutes = require('./routes/authRoutes');
+const authRoutes = require('./routes/authRoutes').default || require('./routes/authRoutes');
 const cors = require('cors');
 const app = express();
 const FRONTEND_URL = process.env.NODE_ENV === 'production'
@@ -15,6 +17,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use('/api/products', productRoutes);
+app.use('/api/auth', authRoutes);
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

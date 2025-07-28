@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { hash, compare } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { generateOTP, sendOTPEmail } from '../utils/otp';
+import '../middlewares/authMiddleware'; // Import to ensure type declarations are loaded
 
 const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL!;
 
@@ -263,7 +264,7 @@ const getProfile = async (req: Request, res: Response) => {
   });
 };
 
-module.exports = {
+export {
   register,
   login,
   verifyOTP,

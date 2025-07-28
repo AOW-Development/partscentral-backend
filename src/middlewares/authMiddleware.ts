@@ -1,17 +1,6 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../services/prisma';
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        userId: number;
-        email: string;
-      };
-    }
-  }
-}
 
 interface JWTPayload {
   userId: number;

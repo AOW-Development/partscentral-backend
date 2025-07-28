@@ -4,6 +4,7 @@ const client_1 = require("@prisma/client");
 const bcrypt_1 = require("bcrypt");
 const jsonwebtoken_1 = require("jsonwebtoken");
 const otp_1 = require("../utils/otp");
+const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL;
 const prisma = new client_1.PrismaClient();
 // Ensure Prisma is properly initialized
 prisma.$connect().catch((err) => {
@@ -104,7 +105,7 @@ const verifyOTP = async (req, res) => {
     }
 };
 const { OAuth2Client } = require('google-auth-library');
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, 'http://localhost:3001/api/auth/google/callback');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, CALLBACK_URL);
 const googleAuth = async (req, res) => {
     try {
         const { code } = req.query;
@@ -189,9 +190,25 @@ const googleAuth = async (req, res) => {
         return res.redirect(`${process.env.FRONTEND_URL}/auth/error`);
     }
 };
+const getProfile = async (req, res) => {
+    if (!req.user)
+        return res.status(401).json({ message: 'Unauthorized' });
+    const userId = req.user.userId; // set by JWT middleware
+    const user = await prisma.customer.findUnique({ where: { id: userId } });
+    if (!user)
+        return res.status(404).json({ message: 'User not found' });
+    res.json({
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        image: user.image,
+        emailVerified: user.emailVerified,
+    });
+};
 module.exports = {
     register,
     login,
     verifyOTP,
     googleAuth,
+    getProfile,
 };
