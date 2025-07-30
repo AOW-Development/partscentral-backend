@@ -6,7 +6,7 @@ import { generateOTP, sendOTPEmail } from '../utils/otp';
 import '../middlewares/authMiddleware'; // Import to ensure type declarations are loaded
 
 const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL!;
-
+console.log('→ GOOGLE_CALLBACK_URL:', CALLBACK_URL); 
 interface RegisterBody {
   email: string;
   password: string;
@@ -159,6 +159,11 @@ const googleAuth = async (req: Request & { query?: { code?: string } }, res: Res
   try {
     const { code } = req.query;
     
+    console.log('→ Environment variables check:');
+    console.log('  GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET');
+    console.log('  GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET');
+    console.log('  CALLBACK_URL:', CALLBACK_URL);
+    
     if (!code) {
       // Initial Google OAuth request
       const authUrl = googleClient.generateAuthUrl({
@@ -167,8 +172,11 @@ const googleAuth = async (req: Request & { query?: { code?: string } }, res: Res
           'https://www.googleapis.com/auth/userinfo.profile',
           'https://www.googleapis.com/auth/userinfo.email',
         ],
+        redirect_uri: CALLBACK_URL,
       });
+      console.log('→ redirecting to:', authUrl);
       return res.redirect(authUrl);
+
     }
 
     // Exchange code for tokens
