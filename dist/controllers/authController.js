@@ -1,10 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getProfile = exports.googleAuth = exports.verifyOTP = exports.login = exports.register = void 0;
 const client_1 = require("@prisma/client");
 const bcrypt_1 = require("bcrypt");
 const jsonwebtoken_1 = require("jsonwebtoken");
 const otp_1 = require("../utils/otp");
+require("../middlewares/authMiddleware"); // Import to ensure type declarations are loaded
 const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL;
+console.log('→ GOOGLE_CALLBACK_URL:', CALLBACK_URL);
 const prisma = new client_1.PrismaClient();
 // Ensure Prisma is properly initialized
 prisma.$connect().catch((err) => {
@@ -41,6 +44,7 @@ const register = async (req, res) => {
         return res.status(500).json({ message: 'Server error' });
     }
 };
+exports.register = register;
 const login = async (req, res) => {
     try {
         const { email, password, otp } = req.body;
@@ -77,6 +81,7 @@ const login = async (req, res) => {
         return res.status(500).json({ message: 'Server error' });
     }
 };
+exports.login = login;
 const verifyOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
@@ -104,11 +109,16 @@ const verifyOTP = async (req, res) => {
         return res.status(500).json({ message: 'Server error' });
     }
 };
+exports.verifyOTP = verifyOTP;
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, CALLBACK_URL);
 const googleAuth = async (req, res) => {
     try {
         const { code } = req.query;
+        console.log('→ Environment variables check:');
+        console.log('  GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET');
+        console.log('  GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET');
+        console.log('  CALLBACK_URL:', CALLBACK_URL);
         if (!code) {
             // Initial Google OAuth request
             const authUrl = googleClient.generateAuthUrl({
@@ -117,7 +127,9 @@ const googleAuth = async (req, res) => {
                     'https://www.googleapis.com/auth/userinfo.profile',
                     'https://www.googleapis.com/auth/userinfo.email',
                 ],
+                redirect_uri: CALLBACK_URL,
             });
+            console.log('→ redirecting to:', authUrl);
             return res.redirect(authUrl);
         }
         // Exchange code for tokens
@@ -190,6 +202,7 @@ const googleAuth = async (req, res) => {
         return res.redirect(`${process.env.FRONTEND_URL}/auth/error`);
     }
 };
+exports.googleAuth = googleAuth;
 const getProfile = async (req, res) => {
     if (!req.user)
         return res.status(401).json({ message: 'Unauthorized' });
@@ -205,10 +218,4 @@ const getProfile = async (req, res) => {
         emailVerified: user.emailVerified,
     });
 };
-module.exports = {
-    register,
-    login,
-    verifyOTP,
-    googleAuth,
-    getProfile,
-};
+exports.getProfile = getProfile;

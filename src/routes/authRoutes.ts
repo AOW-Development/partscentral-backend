@@ -11,9 +11,7 @@ router.post('/verify-otp', authController.verifyOTP as RequestHandler);
 router.get('/google', authController.googleAuth as RequestHandler);
 router.get('/google/callback', authController.googleAuth as RequestHandler);
 
-// Protected route example
-router.get('/profile', authenticateToken, (req: Request & { user?: { userId: number, email: string } }, res: Response) => {
-  res.json({ user: req.user });
-});
+// Protected routes
+router.get('/profile', authenticateToken, authController.getProfile as RequestHandler);
 
 export default router;

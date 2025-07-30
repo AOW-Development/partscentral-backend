@@ -13,8 +13,6 @@ router.post('/login', authController.login);
 router.post('/verify-otp', authController.verifyOTP);
 router.get('/google', authController.googleAuth);
 router.get('/google/callback', authController.googleAuth);
-// Protected route example
-router.get('/profile', authenticateToken, (req, res) => {
-    res.json({ user: req.user });
-});
+// Protected routes
+router.get('/profile', authenticateToken, authController.getProfile);
 exports.default = router;
