@@ -1,0 +1,166 @@
+GMC :  [ Acadia
+Acadia
+Jimmy, Full Size
+ Jimmy, S10/S15
+Safari Van
+Suburban-1500
+Suburban-2500
+Syclone
+Terrain
+Truck-1500 Series
+Truck-2500 Series
+Truck-3500 Series
+Truck-Canyon
+Truck-Envoy
+Truck-Envoy XL
+Truck-Envoy XUV
+Truck-Forward Control
+ Truck-S10/S15/Sonoma
+Truck-Sierra 1500
+Truck-Sierra 2500
+Truck-Sierra 3500
+Truck-Sierra Denali
+Truck-Sierra Denali 1500
+ Truck-Sierra Denali 2500
+Truck-Sierra Denali 3500
+Truck-Yukon (except XL)
+Truck-Yukon XL1500
+ Truck-Yukon XL2500
+Typhoon
+Van 1500
+ Van 2500
+Van 3500
+Van Savana 1500
+Van Savana 2500
+Van Savana 3500 ]
+
+
+isuzu : [
+    Amigo
+Amigo
+Ascender
+Axiom
+Oasis
+Rodeo
+Trooper/Trooper II
+Truck-(Mini Pickup)
+Truck i280 (Pickup)
+Truck i290 (Pickup)
+Truck i350 (Pickup)
+Truck i370 (Pickup)
+Vehicross
+]
+
+jaguar : [
+    F Pace
+F Pace
+F Type
+S Type
+Vanden Plas 
+X Type
+XE
+XF
+XJ Series 
+XJR 
+XJS
+XJ6
+XJ8 
+XJ8
+XJ12
+XK Series 
+XKR
+XK8
+]
+
+volkswagan : [
+    Beetle/Bug
+Beetle/Bug
+Cabrio
+Cabriolet
+CC
+Corrado
+Eos
+Golf
+Golf GTI
+Jetta
+Jetta GLI
+Passat
+Phaeton
+Rabbit
+Routan
+Tiguan
+Touareg
+ Van-EuroVan
+]
+
+
+kia : [
+  Amanti
+Amanti
+Borrego
+Cadenza
+Forte
+K900
+Magentis
+Optima
+Rio
+Rondo
+Sedona
+Sephia
+Sorento
+Soul
+Spectra
+Sportage    
+]
+
+
+hyundai : [
+    Accent
+Accent
+Azera
+Elantra
+Entourage
+Equus
+Genesis
+Ioniq
+Kona
+Santa Fe
+Scoupe
+Sonata
+Tiburon
+Tucson
+Veloster
+Veracruz
+XG Series
+]
+
+LandRover : [
+    Defender 
+Defender 
+Discovery 
+Discovery Sport
+Freelander
+LR2
+LR3
+LR4
+Range Rover
+Range Rover Evoque
+Range Rover Sport
+]
+
+
+
+
+----
+
+make
+model
+year
+partType
+subPart
+inStock = YES or NO  / Yes or no/NO
+miles
+actualPrice
+discountedPrice
+
+
