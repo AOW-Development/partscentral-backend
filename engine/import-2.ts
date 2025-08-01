@@ -25,11 +25,26 @@ async function importWorkbook(buffer: Buffer | ArrayBuffer) {
   const sheet = wb.Sheets[wb.SheetNames[0]];
   const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
+  // Get the actual header row, trimmed
+  const headerRowRaw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' })[0];
+  const headerRow = Array.isArray(headerRowRaw) ? headerRowRaw : [];
+  const sheetHeaders = headerRow.map(h => typeof h === 'string' ? h.trim() : h);
+
+  // Check if all required columns are present (ignoring whitespace)
+  const requiredHeaders = Object.values(headerMap).map(h => h.trim());
+  const missing = requiredHeaders.filter(h => !sheetHeaders.includes(h));
+  if (missing.length) {
+    console.warn(`Skipping file: missing columns: ${missing.join(', ')}`);
+    return; // skip this file
+  }
+
   for (const raw of rawRows) {
+    const normalizedRaw: Record<string, any> = {};
+    for (const k in raw) normalizedRaw[k.trim()] = raw[k];
     // 2️⃣ Remap + trim every field according to headerMap
     const row: Record<string, any> = {};
     for (const [field, colName] of Object.entries(headerMap)) {
-      const val = raw[colName];
+      const val = normalizedRaw[colName];
       // trim strings, leave other types as is
       row[field] = typeof val === 'string' ? val.trim() : val;
     }
@@ -95,7 +110,7 @@ async function importWorkbook(buffer: Buffer | ArrayBuffer) {
         sku: generatedSku,
         modelYear: { connect: { id: modelYear.id } },
         partType: { connect: { id: partType.id } },
-        inStock: row.inStock === 'Yes' || row.inStock === 'YES' || row.inStock === 'Part Available',
+        inStock: row.inStock === 'Yes' || row.inStock === 'YES' || row.inStock === 'Part Available' || row.inStock === 'yes',
         actualprice: Number(row.actualPrice),
         discountedPrice: Number(row.discountedPrice),
         miles: row.miles ? String(row.miles) : null,
@@ -104,7 +119,7 @@ async function importWorkbook(buffer: Buffer | ArrayBuffer) {
         },
       },
       update: {
-        inStock: row.inStock === 'Yes' || row.inStock === 'YES' || row.inStock === "Part Available",
+        inStock: row.inStock === 'Yes' || row.inStock === 'YES' || row.inStock === "Part Available" || row.inStock === "yes",
         actualprice: Number(row.actualPrice),
         discountedPrice: Number(row.discountedPrice),
         miles: row.miles ? String(row.miles) : null,
@@ -120,9 +135,13 @@ async function importWorkbook(buffer: Buffer | ArrayBuffer) {
 
 async function main() {
   // — Option A: batch all XLSX in ./data/
-  const dataDir = join(__dirname, '..','data');
+  const dataDir = join(__dirname,'data');
   const files = readdirSync(dataDir).filter(f => extname(f).toLowerCase() === '.xlsx');
   for (const f of files) {
+    const wb = XLSX.readFile(join(dataDir, f));
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const headers = Object.keys(XLSX.utils.sheet_to_json(sheet, { defval: '' })[0] || {});
+    console.log(`File: ${f} | Headers:`, headers);
     const buf = await import('fs/promises').then(m => m.readFile(join(dataDir, f)));
     await importWorkbook(buf);
   }

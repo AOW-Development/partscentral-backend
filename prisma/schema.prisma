@@ -115,7 +115,7 @@ model Make {
 
 model Model {
   id      Int      @id @default(autoincrement())
-  name    String   @unique
+  name    String   
   makeId  Int
   make    Make     @relation(fields: [makeId], references: [id])
   modelYears ModelYear[]
