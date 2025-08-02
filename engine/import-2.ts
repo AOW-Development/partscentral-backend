@@ -87,7 +87,7 @@ async function importWorkbook(buffer: Buffer | ArrayBuffer) {
     });
 
     // 6. Upsert SubParts (do NOT split by comma, use full string)
-    const subPartName = row.subPart.trim();
+    const subPartName = (row.subPart ?? '').toString().trim();
     const subPart = await prisma.subPart.upsert({
       where: { name_partTypeId: { name: subPartName, partTypeId: partType.id } },
       create: { name: subPartName, partTypeId: partType.id },
