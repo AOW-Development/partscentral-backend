@@ -55,73 +55,146 @@ export const getProductsWithSubPartsByVehicle = async ({ make, model, year, part
   });
 };
 
-export const getGroupedProductWithSubParts = async ({ make, model, year, part } : VehicleQuery) => {
+export const getGroupedProductWithSubParts = async ({ make, model, year, part }: VehicleQuery) => {
   const products = await prisma.product.findMany({
     where: {
       modelYear: {
         model: { name: model, make: { name: make } },
-        year: { value: year }
+        year: { value: year },
       },
-      partType: { name: part }
+      partType: { name: part },
     },
-    include: { 
+    include: {
       subParts: true,
       variants: true, // <-- include all variants for each product
       images: true,
       modelYear: {
         include: {
           model: { include: { make: true } },
-          year: true
-        }
+          year: true,
+        },
       },
-      partType: true
-     }
+      partType: true,
+    },
   });
 
-  // Aggregate all unique subParts
+  // 1. Aggregate all unique subParts
   const allSubParts = [];
-  const seen = new Set();
+  const seenSubParts = new Set();
   for (const p of products) {
     for (const sp of p.subParts) {
-      if (!seen.has(sp.id)) {
+      if (!seenSubParts.has(sp.id)) {
         allSubParts.push(sp);
-        seen.add(sp.id);
+        seenSubParts.add(sp.id);
       }
     }
   }
 
+  // 2. Create a map to group variants by sub-part
+  const variantsBySubPart = new Map();
 
-  // Flatten all variants into a single array for easy frontend consumption
-  const allVariants = [];
   for (const p of products) {
     for (const v of p.variants) {
-      allVariants.push({
-        ...v,
-        product: {
-          id: p.id,
-          sku: p.sku,
-          modelYear: p.modelYear,
-          partType: p.partType,
-          images: p.images,
-          subParts: p.subParts,
-          description: p.description,
-          status: p.status,
-          Availability: p.Availability,
-          warranty: p.warranty,
-          categoryId: p.categoryId,
+      for (const sp of p.subParts) {
+        if (!variantsBySubPart.has(sp.id)) {
+          variantsBySubPart.set(sp.id, {
+            subPart: sp,
+            variants: [],
+          });
         }
-      });
+        variantsBySubPart.get(sp.id).variants.push({
+          ...v,
+          product: {
+            id: p.id,
+            sku: p.sku,
+            // other product details...
+            images: p.images,
+            description: p.description,
+          },
+        });
+      }
     }
   }
 
-
-  // Return a single object
+  // 3. Return the response
   return {
     make,
     model,
     year,
     part,
     subParts: allSubParts,
-    variants: allVariants
+    groupedVariants: Array.from(variantsBySubPart.values()),
+  };
+};
+
+export const getGroupedProductWithSubPartsV2 = async ({ make, model, year, part }: VehicleQuery) => {
+  const products = await prisma.product.findMany({
+    where: {
+      modelYear: {
+        model: { name: model, make: { name: make } },
+        year: { value: year },
+      },
+      partType: { name: part },
+    },
+    include: {
+      subParts: true,
+      variants: true, // <-- include all variants for each product
+      images: true,
+      modelYear: {
+        include: {
+          model: { include: { make: true } },
+          year: true,
+        },
+      },
+      partType: true,
+    },
+  });
+
+  // 1. Aggregate all unique subParts
+  const allSubParts = [];
+  const seenSubParts = new Set();
+  for (const p of products) {
+    for (const sp of p.subParts) {
+      if (!seenSubParts.has(sp.id)) {
+        allSubParts.push(sp);
+        seenSubParts.add(sp.id);
+      }
+    }
+  }
+
+  // 2. Create a map to group variants by sub-part
+  const variantsBySubPart = new Map();
+
+  for (const p of products) {
+    for (const v of p.variants) {
+      for (const sp of p.subParts) {
+        if (!variantsBySubPart.has(sp.id)) {
+          variantsBySubPart.set(sp.id, {
+            subPart: sp,
+            variants: [],
+          });
+        }
+        variantsBySubPart.get(sp.id).variants.push({
+          ...v,
+          product: {
+            id: p.id,
+            sku: p.sku,
+            // other product details...
+            images: p.images,
+            description: p.description,
+          },
+        });
+      }
+    }
+  }
+
+  // 3. Return the response
+  return {
+    make,
+    model,
+    year,
+    part,
+    subParts: allSubParts,
+    groupedVariants: Array.from(variantsBySubPart.values()),
   };
 };

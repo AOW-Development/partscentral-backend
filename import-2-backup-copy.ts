@@ -28,35 +28,70 @@ async function importWorkbook(buffer: Buffer | ArrayBuffer) {
   const sheet = wb.Sheets[wb.SheetNames[0]];
   const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-  // Get the actual header row to check for required columns
+  // Get the actual header row, trimmed
   const headerRowRaw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' })[0];
   const headerRow = Array.isArray(headerRowRaw) ? headerRowRaw : [];
-  const sheetHeaders = headerRow.map(h => (typeof h === 'string' ? h : '').trim().toLowerCase().replace(/\s+/g, ''));
+  const sheetHeaders = headerRow.map(h => typeof h === 'string' ? h.trim() : h);
 
-  // Only require core columns
+  // Flexible detection for duplicate and variant columns
+  const possibleMilesNames = ['miles', 'miles-2', 'miles_1', 'mile', 'Miles'];
+  const possibleActualPriceNames = ['actual price 1', 'actual price 2', 'actual price 1 ', 'actual price 2 '];
+  const possibleDiscountPriceNames = ['discount price 1', 'discount price 2', 'discount price 1 ', 'discount price 2 '];
+  const milesIndices: number[] = [];
+  const actualPriceIndices: number[] = [];
+  const discountedPriceIndices: number[] = [];
+  sheetHeaders.forEach((header, idx) => {
+    const h = header.toLowerCase().replace(/\s+/g, '');
+    if (possibleMilesNames.some(name => h === name.replace(/\s+/g, ''))) milesIndices.push(idx);
+    if (possibleActualPriceNames.some(name => h === name.replace(/\s+/g, ''))) actualPriceIndices.push(idx);
+    if (possibleDiscountPriceNames.some(name => h === name.replace(/\s+/g, ''))) discountedPriceIndices.push(idx);
+  });
+
+  // Only require core columns, not variant columns
   const requiredHeaders = ['makename', 'modelname', 'modelyear', 'partname', 'subpartname', 'stock'];
-  const missing = requiredHeaders.filter(h => !sheetHeaders.includes(h));
+  const missing = requiredHeaders.filter(h => !sheetHeaders.map(x => x.toLowerCase().replace(/\s+/g, '')).includes(h));
   if (missing.length) {
     console.warn(`Skipping file: missing columns: ${missing.join(', ')}`);
     return; // skip this file
   }
 
   for (const raw of rawRows) {
-    // Create a new object with trimmed headers as keys
-    const normalizedRaw: Record<string, any> = {};
-    for (const k in raw) {
-      if (Object.prototype.hasOwnProperty.call(raw, k)) {
-        normalizedRaw[(typeof k === 'string' ? k : '').trim()] = raw[k];
-      }
-    }
+    // Convert row to array by column order
+    const rowArr = headerRow.map((_, idx) => raw[sheetHeaders[idx]]);
 
-    // Map columns to our desired fields using headerMap
+    // Robustly extract values by order
+    const miles = milesIndices.length > 0 ? rowArr[milesIndices[0]] : '';
+    const miles2 = milesIndices.length > 1 ? rowArr[milesIndices[1]] : '';
+    const actualPrice = actualPriceIndices.length > 0 ? rowArr[actualPriceIndices[0]] : '';
+    const actualPrice2 = actualPriceIndices.length > 1 ? rowArr[actualPriceIndices[1]] : '';
+    const discountedPrice = discountedPriceIndices.length > 0 ? rowArr[discountedPriceIndices[0]] : '';
+    const discountedPrice2 = discountedPriceIndices.length > 1 ? rowArr[discountedPriceIndices[1]] : '';
+
+    // Assign to row fields for downstream code
+    raw.miles = miles;
+    raw.miles2 = miles2;
+    raw.actualPrice = actualPrice;
+    raw.actualPrice2 = actualPrice2;
+    raw.discountedPrice = discountedPrice;
+    raw.discountedPrice2 = discountedPrice2;
+
+    const normalizedRaw: Record<string, any> = {};
+    for (const k in raw) normalizedRaw[k.trim()] = raw[k];
+    // 2️⃣ Remap + trim every field according to headerMap
     const row: Record<string, any> = {};
     for (const [field, colName] of Object.entries(headerMap)) {
       const val = normalizedRaw[colName];
       // trim strings, leave other types as is
       row[field] = typeof val === 'string' ? val.trim() : val;
     }
+
+    // Always assign miles and miles2 from the extracted values, regardless of headerMap
+    row.miles = raw.miles;
+    row.miles2 = raw.miles2;
+    row.actualPrice = raw.actualPrice;
+    row.actualPrice2 = raw.actualPrice2;
+    row.discountedPrice = raw.discountedPrice;
+    row.discountedPrice2 = raw.discountedPrice2;
 
     // ── your entire upsert block BELOW stays exactly the same ──
 
