@@ -4,3 +4,4 @@ client
 query builder 
 studio
 
+curl -X PUT "http://172.26.5.251:9200/products" -H "Content-Type: application/json" -d'{"settings":{"analysis":{"analyzer":{"autocomplete":{"tokenizer":"autocomplete_tokenizer","filter":["lowercase"]}},"tokenizer":{"autocomplete_tokenizer":{"type":"edge_ngram","min_gram":2,"max_gram":20,"token_chars":["letter","digit"]}}}},"mappings":{"properties":{"sku":{"type":"text","analyzer":"autocomplete","search_analyzer":"standard"},"description":{"type":"text"},"embedding":{"type":"dense_vector","dims":384},"inStock":{"type":"boolean"},"actualprice":{"type":"float"},"discountedPrice":{"type":"float"},"miles":{"type":"keyword"},"warranty":{"type":"keyword"}}}}'

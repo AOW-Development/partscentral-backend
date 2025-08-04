@@ -1,0 +1,96 @@
+const mysql = require('mysql2/promise');
+const { Client } = require('@elastic/elasticsearch');
+const { HfInference } = require('@huggingface/inference'); // Or use sentence-transformers locally
+
+const hf = new HfInference('<YOUR_HUGGINGFACE_API_KEY>'); // Or use local model
+
+const es = new Client({ node: 'http://<ELASTICSEARCH_HOST>:9200' });
+
+async function getEmbedding(text) {
+  // HuggingFace Inference API (or use local model for free)
+  const res = await hf.featureExtraction({
+    model: 'sentence-transformers/all-MiniLM-L6-v2',
+    inputs: text,
+  });
+  return res;
+}
+
+async function main() {
+  const db = await mysql.createConnection({
+    host: '<MYSQL_HOST>',
+    user: '<MYSQL_USER>',
+    password: '<MYSQL_PASS>',
+    database: '<MYSQL_DB>',
+  });
+
+  const [rows] = await db.execute('SELECT * FROM Product LIMIT 10000'); // Batch if needed
+
+  const body = [];
+  for (const row of rows) {
+    const name = row.sku; // Or build a better name
+    const desc = row.description || '';
+    const embedding = await getEmbedding(`${name} ${desc}`);
+
+    body.push({ index: { _index: 'products', _id: row.id } });
+    body.push({
+      sku: row.sku,
+      name,
+      description: desc,
+      inStock: !!row.inStock,
+      actualprice: row.actualprice,
+      discountedPrice: row.discountedPrice,
+      embedding,
+      // Add subParts, etc. as needed
+    });
+  }
+
+  const { body: bulkResponse } = await es.bulk({ refresh: true, body });
+  if (bulkResponse.errors) {
+    console.error('Bulk errors:', bulkResponse.errors);
+  } else {
+    console.log('Bulk index complete');
+  }
+  await db.end();
+}
+
+main().catch(console.error);
+
+
+//////////////////////////////////
+
+
+search.js
+
+
+
+const express = require('express');
+const { Client } = require('@elastic/elasticsearch');
+const es = new Client({ node: 'http://<ELASTICSEARCH_HOST>:9200' });
+
+const app = express();
+
+app.get('/api/search', async (req, res) => {
+  const { q } = req.query;
+  // For semantic: generate embedding for q, then kNN search
+  // For BM25: normal match query
+  const result = await es.search({
+    index: 'products',
+    size: 10,
+    query: {
+      multi_match: {
+        query: q,
+        fields: ['name^2', 'description'],
+      }
+    }
+  });
+  res.json(result.hits.hits.map(hit => hit._source));
+});
+
+app.listen(3001, () => console.log('API running on 3001'));
+
+
+
+
+// npm install mysql2 @elastic/elasticsearch @huggingface/inference
+
+//npm install express @elastic/elasticsearch
