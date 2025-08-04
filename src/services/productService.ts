@@ -64,7 +64,18 @@ export const getGroupedProductWithSubParts = async ({ make, model, year, part } 
       },
       partType: { name: part }
     },
-    include: { subParts: true }
+    include: { 
+      subParts: true,
+      variants: true, // <-- include all variants for each product
+      images: true,
+      modelYear: {
+        include: {
+          model: { include: { make: true } },
+          year: true
+        }
+      },
+      partType: true
+     }
   });
 
   // Aggregate all unique subParts
@@ -79,12 +90,38 @@ export const getGroupedProductWithSubParts = async ({ make, model, year, part } 
     }
   }
 
+
+  // Flatten all variants into a single array for easy frontend consumption
+  const allVariants = [];
+  for (const p of products) {
+    for (const v of p.variants) {
+      allVariants.push({
+        ...v,
+        product: {
+          id: p.id,
+          sku: p.sku,
+          modelYear: p.modelYear,
+          partType: p.partType,
+          images: p.images,
+          subParts: p.subParts,
+          description: p.description,
+          status: p.status,
+          Availability: p.Availability,
+          warranty: p.warranty,
+          categoryId: p.categoryId,
+        }
+      });
+    }
+  }
+
+
   // Return a single object
   return {
     make,
     model,
     year,
     part,
-    subParts: allSubParts
+    subParts: allSubParts,
+    variants: allVariants
   };
 };

@@ -159,23 +159,38 @@ model Product {
   sku             String      @unique
   modelYearId     Int
   partTypeId      Int
-  inStock         Boolean
   description     String?
-  actualprice     Float?
-  discountedPrice Float?
   status          String?
-  miles           String?
+  inStock         Boolean
   Availability    String?
   warranty        String?
   categoryId      Int?
   category        Category?   @relation(fields: [categoryId], references: [id])
   orderItems      OrderItem[]
   inventory       Inventory?
+  images          ProductImage[]
   modelYear       ModelYear   @relation(fields: [modelYearId], references: [id])
   partType        PartType    @relation(fields: [partTypeId], references: [id])
-  images          ProductImage[]
   subParts        SubPart[]   @relation("ProductSubParts")
+  variants        ProductVariant_1[] @relation("ProductToVariant")
 }
+
+
+model ProductVariant_1 {
+  id              Int         @id @default(autoincrement())
+  sku             String      @unique
+  productId       Int
+  miles           String?
+  actualprice     Float?
+  discountedPrice Float?
+  inStock         Boolean
+  product         Product     @relation("ProductToVariant", fields: [productId], references: [id])
+}
+
+
+
+
+
 
 model ProductImage {
   id        Int     @id @default(autoincrement())
