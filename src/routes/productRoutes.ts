@@ -8,4 +8,4 @@ router.get('/grouped-with-subparts', productController.getGroupedProductWithSubP
 router.get('/v2/grouped-with-subparts', productController.getGroupedProductWithSubPartsV2);
 
 router.get('/years', productController.getYearsForMakeModel);
-module.exports= router ;
+export default router ;
