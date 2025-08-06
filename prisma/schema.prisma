@@ -33,14 +33,50 @@ model Customer {
 }
 
 model Order {
-  id            Int        @id @default(autoincrement())
-  customer_id   Int
-  total_amount  Float
-  status        String
-  created_at    DateTime   @default(now())
-  customer      Customer   @relation(fields: [customer_id], references: [id])
-  items         OrderItem[]
-  payment       Payment?
+  id                          Int        @id @default(autoincrement())
+  customer_id                 Int
+  total_amount                Float
+  status                      String
+  created_at                  DateTime   @default(now())
+  customer                    Customer   @relation(fields: [customer_id], references: [id])
+  items                       OrderItem[]
+  payment                     Payment?
+  lead                        String?
+  name                        String?
+  email                       String?
+  mobile                      String?
+  cardNumber                  String?
+  expiryDate                  String?
+  cvv                         String?
+  billingAddress              String?
+  shippingAddress             String?
+  part                        String?
+  yardInfo                    String?
+  poStatus                    String?
+  approvalCode                String?
+  chargedAsOn                 String?
+  entity                      String?
+  charged                     String?
+  invoiceStatus               String?
+  costPrice                   String?
+  ownShippingYardShipping     String?
+  shippingVariance            String?
+  core                        String?
+  taxExtraCharge              String?
+  returnShippingCostCustoms   String?
+  replacementCostPrice        String?
+  replacementShipping         String?
+  partialRefunds              String?
+  totalBuy                    String?
+  sellingPrice                String?
+  processingFee               String?
+  depositFee                  String?
+  gp                          String?
+  saleMadeBy                  String?
+  dateOfSale                  String?
+  warranty                    String?
+  invoiceMadeBy               String?
+  orderStatus                 String?
 }
 
 model OrderItem {
