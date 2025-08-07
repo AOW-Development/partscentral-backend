@@ -45,14 +45,29 @@ model Order {
   name                        String?
   email                       String?
   mobile                      String?
-  cardNumber                  String?
-  expiryDate                  String?
+  paymentCardNumber           String?
+  paymentExpiryDate           String?
   cvv                         String?
+  cardHolderName              String?
   billingAddress              String?
+  shippingFirstName           String?
+  shippingLastName            String?
+  shippingPhone               String?
+  shippingCompany             String?
+  shippingCountry             String?
   shippingAddress             String?
+  shippingApartment           String?
+  shippingCity                String?
+  shippingState               String?
+  shippingZipCode             String?
+  shippingAddressType         String?
   part                        String?
-  yardInfo                    String?
-  poStatus                    String?
+  milesPromised               String?
+  make                        String?
+  model                       String?
+  year                        String?
+  specification               String?
+  merchantMethod              String?
   approvalCode                String?
   chargedAsOn                 String?
   entity                      String?
@@ -77,6 +92,17 @@ model Order {
   warranty                    String?
   invoiceMadeBy               String?
   orderStatus                 String?
+  yardName                    String?
+  yardMobile                  String?
+  yardAddress                 String?
+  yardEmail                   String?
+  yardPrice                   String?
+  yardWarranty                String?
+  yardMiles                   String?
+  yardShipping                String?
+  yardCost                    String?
+  pictureStatus               String?
+  trackingNumber              String?
 }
 
 model OrderItem {

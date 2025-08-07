@@ -14,3 +14,14 @@ erDiagram
   Product ||--o{ Inventory : has
   Order ||--o{ Payment : has
   AdminUser
+
+
+
+
+  model {
+    id
+    lead
+    customer_name
+    created_at
+     
+  }
