@@ -33,6 +33,16 @@ exports.getGroupedProductWithSubParts = async (req, res) => {
         res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
 };
+exports.getGroupedProductWithSubPartsV2 = async (req, res) => {
+    const { make, model, year, part } = req.query;
+    try {
+        const result = await productService.getGroupedProductWithSubPartsV2({ make, model, year, part });
+        res.json(result);
+    }
+    catch (err) {
+        res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+};
 exports.getYearsForMakeModel = async (req, res) => {
     try {
         const make = String(req.query.make);

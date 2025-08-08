@@ -144,7 +144,7 @@ async function importWorkbook(buffer: Buffer | ArrayBuffer) {
     
 // 8. Upsert ProductVariant
 // 8. Upsert ProductVariant (Variant 1)
-const miles1 = row.miles ? String(row.miles).replace(/\s+/g, '').toUpperCase() : 'NOMILES';
+const miles1 = row.miles ? String(row.miles).replace(/\s+/g, '').toUpperCase() : 'N/A';
 const variantSku1 = baseSku + '-' + miles1;
 await prisma.productVariant_1.upsert({
   where: { sku: variantSku1 },
@@ -168,7 +168,7 @@ await prisma.productVariant_1.upsert({
 // console.log('row.miles2:', row.miles2, 'row.actualPrice2:', row.actualPrice2, 'row.discountedPrice2:', row.discountedPrice2);
 // 9. Upsert ProductVariant (Variant 2, if present)
 if (row.miles2 || row.actualPrice2 || row.discountedPrice2) {
-  const miles2 = row.miles2 ? String(row.miles2).replace(/\s+/g, '').toUpperCase() : 'NOMILES';
+  const miles2 = row.miles2 ? String(row.miles2).replace(/\s+/g, '').toUpperCase() : 'N/A';
   const variantSku2 = baseSku + '-' + miles2;
   await prisma.productVariant_1.upsert({
     where: { sku: variantSku2 },
