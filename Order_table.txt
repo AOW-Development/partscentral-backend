@@ -1,0 +1,80 @@
+    email: "",
+    mobile: "",
+    partPrice: "",
+    taxesPrice: "",
+    handlingPrice: "",
+    processingPrice: "",
+    corePrice: "",
+    shippingAddressType: "",
+    company: "",
+    shippingAddress: "",
+    billingAddress: "",
+    cardHolderName: "",
+    cardNumber: "",
+    cardDate: "",
+    cardCvv: "",
+    warranty: "",
+    milesPromised: "",
+    make: "",
+    model: "",
+    year: "",
+    parts: "",
+    specification: "",
+    totalSellingPrice: "",
+    totalPrice: "",
+    merchantMethod: "",
+    approvalCode: "",
+    entity: "",
+    charged: "",
+    saleMadeBy: "",
+    
+    pictureStatus: "",
+    carrierName: "",
+    trackingNumber: "",
+    notes: "",
+
+
+suzuki 
+ford
+
+
+
+customer Info
+ customerName
+ mobile
+ partPrice
+ taxes
+
+
+Payment Info
+
+
+Yard Info 
+
+previoud yard info :
+
+    yard_name
+    yard_mobile
+    yard_address
+    yard_email
+    yard_price
+    yard_warranty
+    yard_miles
+    yard_shipping
+    yard_cost
+    Reason
+
+current yard info :
+
+    yard_name
+    yard_mobile
+    yard_address
+    yard_email
+    yard_price
+    yard_warranty
+    yard_miles
+    yard_shipping
+    yard_cost
+    
+
+Yard

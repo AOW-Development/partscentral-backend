@@ -1,0 +1,141 @@
+enum OrderStatus {
+    draft
+    pending
+    paid
+    payment_failed
+    processing
+    shipped
+    delivered
+    cancelled
+    refunded
+}
+
+enum OrderSource {
+    storefront
+    admin
+}
+
+enum charged {
+    Yes 
+    No
+}
+
+enum warranty {
+    30 Days
+    60 Days
+    90 Days
+    6  Months
+    1  Year
+}
+
+
+model Address {
+    id      String      @id @default(cuid())
+}
+
+Order {
+    id          String @id @default(cuid())
+    orderNumer  String @unique
+    year        double
+    sale_madeby String
+    curency  String @default('USD')
+
+    // link to payment record 
+    payment         Payment?
+    paymentId       String?
+
+    total_amount    Decimal
+
+    part_price      Decimal      @db.decimal(18,2)
+    taxes_ammount   Decimal
+    handling_fee    Decimal
+    processing_fee  Decimal
+    core_price      Decimal
+
+    warranty
+    miles_promised  Decimal
+
+    // items
+    items       OrderItem[]
+
+    // to avoid duplicate entry
+    idempotencyKey String?      @unique
+
+    customer 
+    customerId      @String   @relation
+
+    events      OrderEvent[]
+    total_amount    Decimal  @db.decimal(18,2)
+    
+    metadata        json?
+    yardInfo    Yard_info
+    created_at  DateTime    @default(now())
+    updated_at  DateTime    @default(now())
+
+
+
+}
+
+OrderItem {
+    id              String    @id @default(cuid())
+    Order       Order       @relation(fields: [orderId], refrences: [id])
+    orderId     Order
+    make_name   String
+    model_name  String
+    year_name   String
+    part_name   String
+    specification   String
+
+    productId  ProductVariant_1 relation // give relatio here with
+    sku         String
+    quantity    Int
+    metadata    Json?  
+    lineTotal   Decimal @db.Decimal(18,2)
+
+    source OrderSource      @default(storefront)
+    status OrderStatus      @default(pending)
+
+
+}
+
+Payment {
+    id
+    order_id        @relation
+    total_amount
+    method
+    status
+    paid_at
+    created_at
+    card_holderName
+    card_number
+    card_cvv
+    card_expiry
+    created_at
+    entity
+    charged
+    metadata json?
+
+}
+
+model Yard_info {
+    id          String      @id @default(cuid())
+    order       Order       @relation(fields: [orderId] ,refrences: [id])
+    yard_name
+    yard_address
+    yard_mobile
+    yard
+
+}
+
+model Address {
+
+}
+
+model OrderEvent {
+    id      String      @id @Default(cuid())
+    order   Order       relation(fields:    [orderId],  refrences:  [id])
+    orderId     String
+    type    String      // order_creared , payment_successded
+    payload     Json?
+    created_at      DateTime    @default(now())
+}
