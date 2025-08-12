@@ -7,6 +7,45 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum OrderStatus {
+  DRAFT
+  PENDING
+  PAID
+  PAYMENT_FAILED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum OrderSource {
+  STOREFRONT
+  ADMIN
+  API
+}
+
+enum Warranty {
+  WARRANTY_30_DAYS
+  WARRANTY_60_DAYS
+  WARRANTY_90_DAYS
+  WARRANTY_6_MONTHS
+  WARRANTY_1_YEAR
+}
+
+enum AddressType {
+  RESIDENTIAL
+  TERMINAL
+  COMMERCIAL
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
 model Category {
   id        Int       @id @default(autoincrement())
   name      String
@@ -33,71 +72,136 @@ model Customer {
 }
 
 model Order {
-  id                          Int        @id @default(autoincrement())
-  customer_id                 Int
-  total_amount                Float
-  status                      String
-  created_at                  DateTime   @default(now())
-  customer                    Customer   @relation(fields: [customer_id], references: [id])
-  items                       OrderItem[]
-  payment                     Payment?
-  lead                        String?
-  name                        String?
-  email                       String?
-  mobile                      String?
-  cardNumber                  String?
-  expiryDate                  String?
-  cvv                         String?
-  billingAddress              String?
-  shippingAddress             String?
-  part                        String?
-  yardInfo                    String?
-  poStatus                    String?
-  approvalCode                String?
-  chargedAsOn                 String?
-  entity                      String?
-  charged                     String?
-  invoiceStatus               String?
-  costPrice                   String?
-  ownShippingYardShipping     String?
-  shippingVariance            String?
-  core                        String?
-  taxExtraCharge              String?
-  returnShippingCostCustoms   String?
-  replacementCostPrice        String?
-  replacementShipping         String?
-  partialRefunds              String?
-  totalBuy                    String?
-  sellingPrice                String?
-  processingFee               String?
-  depositFee                  String?
-  gp                          String?
-  saleMadeBy                  String?
-  dateOfSale                  String?
-  warranty                    String?
-  invoiceMadeBy               String?
-  orderStatus                 String?
+  id                String      @id @default(cuid())
+  orderNumber       String      @unique
+  year              Int?
+  saleMadeBy        String?
+  currency          String      @default("USD")
+  source            OrderSource @default(STOREFRONT)
+  status            OrderStatus @default(PENDING)
+  
+  // Totals
+  subtotal          Decimal     @db.Decimal(18,2)
+  taxesAmount       Decimal?    @db.Decimal(18,2)
+  shippingAmount    Decimal?    @db.Decimal(18,2)
+  handlingFee       Decimal?    @db.Decimal(18,2)
+  processingFee     Decimal?    @db.Decimal(18,2)
+  corePrice         Decimal?    @db.Decimal(18,2)
+  milesPromised     Decimal?    @db.Decimal(18,2)
+  totalAmount       Decimal     @db.Decimal(18,2)
+  
+  // Relations
+  customer          Customer    @relation(fields: [customerId], references: [id])
+  customerId        Int
+  items             OrderItem[]
+  events            OrderEvent[]
+  payments          Payment[]
+  yardInfo          YardInfo?
+  yardHistory       YardHistory[]
+  
+  // Address
+  billingSnapshot   Json?
+  shippingSnapshot  Json?
+  addressId         String?
+  address           Address?    @relation(fields: [addressId], references: [id])
+  addressType       AddressType
+  companyName       String?
+  
+  // Metadata
+  idempotencyKey    String?     @unique
+  metadata          Json?
+  notes             String?
+  
+  // Shipping
+  carrierName       String?
+  trackingNumber    String?
+  
+  // PO Information
+  poStatus          String?
+  poSentAt          DateTime?
+  poConfirmAt       DateTime?
+  
+  // Timestamps
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  @@index([createdAt])
+  @@index([status])
 }
 
 model OrderItem {
-  order_id   Int
-  product_id Int
-  quantity   Int
-
-  order      Order   @relation(fields: [order_id], references: [id])
-  product    Product @relation(fields: [product_id], references: [id])
-
-  @@id([order_id, product_id])
+  id              String    @id @default(cuid())
+  order           Order     @relation(fields: [orderId], references: [id])
+  orderId         String
+  
+  // Product Details
+  makeName        String
+  modelName       String
+  yearName        String
+  partName        String
+  specification   String
+  
+  // Media
+  pictureStatus   String?
+  pictureUrl      String?
+  
+  // Product Reference
+  productVariant  ProductVariant_1 @relation(fields: [productVariantId], references: [id])
+  productVariantId Int
+  
+  product         Product @relation(fields: [product_id], references: [id])
+  product_id Int 
+  sku             String
+  
+  // Pricing
+  quantity        Int
+  unitPrice       Decimal   @db.Decimal(18,2)
+  lineTotal       Decimal   @db.Decimal(18,2)
+  
+  // Metadata
+  source          OrderSource @default(STOREFRONT)
+  status          OrderStatus @default(PENDING)
+  metadata        Json?
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  
+  @@index([orderId])
+  @@index([productVariantId])
 }
 
 model Payment {
-  id        Int      @id @default(autoincrement())
-  order_id  Int      @unique
-  amount    Float
-  method    String
-  status    String
-  paid_at   DateTime?
-  order     Order    @relation(fields: [order_id], references: [id])
+  id                  String        @id @default(cuid())
+  order               Order?        @relation(fields: [orderId], references: [id])
+  orderId             String?
+  
+  // Payment Details
+  provider            String
+  providerPaymentId   String?       @unique
+  token               String?
+  last4               String?
+  currency            String        @default("USD")
+  amount              Decimal       @db.Decimal(18,2)
+  method              String?
+  status              PaymentStatus @default(PENDING)
+  paidAt              DateTime?
+  
+  // Card Details
+  cardHolderName      String
+  cardNumber          String
+  cardCvv             String
+  cardExpiry          DateTime
+  cardBrand           String?
+  
+  // Metadata
+  entity              String
+  metadata            Json?
+  
+  // Timestamps
+  createdAt           DateTime      @default(now())
+  
+  @@index([orderId])
+  @@index([providerPaymentId])
 }
 
 model Account {
@@ -137,10 +241,80 @@ model AdminUser {
 }
 
 model Inventory {
-  product_id        Int   @id
+  product_id        Int     @id
   quantity_in_stock Int
   reorder_level     Int
   product           Product @relation(fields: [product_id], references: [id])
+}
+
+model Address {
+  id            String      @id @default(cuid())
+  addressType   AddressType
+  shippingInfo  Json?
+  billingInfo   Json?
+  companyName   String?
+  
+  // Relations
+  orders       Order[]
+  
+  // Timestamps
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderEvent {
+  id          String    @id @default(cuid())
+  order       Order     @relation(fields: [orderId], references: [id])
+  orderId     String
+  type        String
+  data        Json?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  
+  @@index([orderId])
+}
+
+model YardInfo {
+  id                    String    @id @default(cuid())
+  order                 Order     @relation(fields: [orderId], references: [id])
+  orderId               String    @unique
+  
+  // Yard Details
+  yardName             String?
+  yardAddress          String
+  yardMobile           String?
+  yardEmail            String?
+  yardPrice            Decimal?  @db.Decimal(18,2)
+  yardWarranty         Warranty?
+  yardMiles            Decimal?  @db.Decimal(18,2)
+  yardOwnShippingInfo  Json?
+  yardShippingType     String?
+  yardShippingCost     Decimal?  @db.Decimal(18,2)
+  
+  // Timestamps
+  updatedAt            DateTime  @updatedAt
+  createdAt            DateTime  @default(now())
+  reason               String?
+}
+
+model YardHistory {
+  id              String    @id @default(cuid())
+  order           Order     @relation(fields: [orderId], references: [id])
+  orderId         String
+  
+  // Yard Details
+  yardName        String?
+  yardAddress     String
+  yardMobile      String?
+  yardEmail       String?
+  yardPrice       Decimal?  @db.Decimal(18,2)
+  yardWarranty    Warranty?
+  yardMiles       Decimal?  @db.Decimal(18,2)
+  
+  // Timestamps
+  changedAt       DateTime  @default(now())
+  reason          String?
+  @@index([orderId])
 }
 
 model Make {
@@ -202,13 +376,13 @@ model Product {
   warranty        String?
   categoryId      Int?
   category        Category?   @relation(fields: [categoryId], references: [id])
-  orderItems      OrderItem[]
   inventory       Inventory?
   images          ProductImage[]
   modelYear       ModelYear   @relation(fields: [modelYearId], references: [id])
   partType        PartType    @relation(fields: [partTypeId], references: [id])
   subParts        SubPart[]   @relation("ProductSubParts")
   variants        ProductVariant_1[] @relation("ProductToVariant")
+  orderItems      OrderItem[]
 }
 
 
@@ -221,6 +395,7 @@ model ProductVariant_1 {
   discountedPrice Float?
   inStock         Boolean
   product         Product     @relation("ProductToVariant", fields: [productId], references: [id])
+  orderItems      OrderItem[]
 }
 
 
