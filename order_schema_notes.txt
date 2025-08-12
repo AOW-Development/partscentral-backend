@@ -1,0 +1,221 @@
+
+enum OrderStatus {
+  DRAFT
+  PENDING
+  PAID
+  PAYMENT_FAILED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum OrderSource {
+  STOREFRONT
+  ADMIN
+  API
+}
+
+enum Warranty {
+  WARRANTY_30_DAYS
+  WARRANTY_60_DAYS
+  WARRANTY_90_DAYS
+  WARRANTY_6_MONTHS
+  WARRANTY_1_YEAR
+}
+
+enum AddressType {
+  RESIDENTIAL
+  TERMINAL
+  COMMERCIAL
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+
+
+model Address {
+    id      String      @id @default(cuid())
+    address_type address_type
+    shipping_address json?
+    billing_address json?
+    company_name String?
+}
+
+Order {
+    id          String @id @default(cuid())
+    orderNumer  String @unique
+    year        Int?
+    sale_madeby String?
+    curency  String @default("USD")
+
+
+
+  source           OrderSource  @default(STOREFRONT)
+  status           OrderStatus  @default(PENDING)
+
+  // totals
+  subtotal         Decimal      @db.Decimal(18,2)
+  taxesAmount      Decimal?     @db.Decimal(18,2)
+  shippingAmount   Decimal?     @db.Decimal(18,2)
+  handlingFee      Decimal?     @db.Decimal(18,2)
+  processingFee    Decimal?     @db.Decimal(18,2)
+  corePrice        Decimal?     @db.Decimal(18,2)
+  milesPromised    Decimal?     @db.Decimal(18,2)
+  totalAmount      Decimal      @db.Decimal(18,2)
+    
+     
+    warranty         Warranty?
+    // items
+    items       OrderItem[]
+    events      OrderEvent[]
+    payments         Payment[]    // one order can have multiple payments (partial, retries, refunds)
+
+    // to avoid duplicate entry
+    idempotencyKey String?      @unique
+    metadata        json?
+    notes String?
+    customer         Customer?        @relation(fields: [customerId], references: [id])
+    customerId      @String   
+    
+    created_at  DateTime    @default(now())
+    updated_at  DateTime     @updatedAt
+
+    carrier_name String?
+    tracking_number String?
+    notes String?       
+
+
+    poStatus         String?
+  poSentAt         DateTime?
+  poConfirmAt      DateTime?
+    
+
+  // yard: current info + history
+  yardInfo         YardInfo?
+  yardHistory      YardHistory[]
+
+      // address: immutable snapshots (recommended) + optional FK to normalized address if you use reuse
+  billingSnapshot  Json?        // JSON snapshot for billing address
+  shippingSnapshot Json?        // JSON snapshot for shipping address
+  addressId        String?      // optional FK to Address if you want a normalized link
+  address          Address?     @relation(fields: [addressId], references: [id])
+  addressType AddressType
+  companyName String?
+@@index([createdAt])
+@@index([status])
+
+}
+
+OrderItem {
+    id          String    @id @default(cuid())
+    Order       Order       @relation(fields: [orderId], refrences: [id])
+    orderId     String?
+    
+    make_name       String
+    model_name      String
+    year_name       String
+    part_name       String
+    specification   String
+    
+    picture_status  String?
+    picture_url String?
+
+    productId  ProductVariant_1 @relation // give relatio here with
+    sku         String
+    quantity    Int
+    metadata    Json?  
+   
+    unitPrice   Decimal  @db.Decimal(18,2)
+    lineTotal   Decimal  @db.Decimal(18,2)
+
+     source      OrderSource @default(STOREFRONT)
+  status      OrderStatus @default(PENDING)
+  created_at  DateTime    @default(now())
+    
+
+}
+
+
+Payment {
+    id          String @id @default(cuid())
+    Order       Order?      @relation(fields: [orderId], refrences: [id])
+    orderId     String?
+
+     provider            String   // e.g., stripe, razorpay
+  providerPaymentId   String?  @unique
+token               String?  // provider token / charge id reference
+ last4               String?  // last 4 digits if available
+  currency            String   @default("USD")
+
+
+    amount Decimal @db.Decimal(18,2)
+    method String?
+    status  PaymentStatus @default(PENDING)
+    paid_at DateTime
+    created_at DateTime
+    card_holderName String
+    card_number String
+    card_cvv String
+    card_expiry DateTime
+    cardBrand           String?
+    
+    entity String
+
+    metadata json?
+
+}
+
+
+model YardInfo {
+  id            String   @id @default(cuid())
+  order         Order    @relation(fields: [orderId], references: [id])
+  orderId       String   @unique
+  yardName      String?
+  yardAddress   String    
+  yardMobile    String?
+  yardEmail     String?
+  yardPrice     Decimal? @db.Decimal(18,2)
+  yardWarranty  Warranty?
+  yardMiles     Decimal? @db.Decimal(18,2)
+  yardOwnShippingInfo  json?
+  yardShippingType  String?
+  yardShippingCost Decimal? @db.Decimal(18,2)
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+}
+
+model YardHistory {
+  id            String   @id @default(cuid())
+  order         Order    @relation(fields: [orderId], references: [id])
+  orderId       String
+  yardName      String?
+  yardAddress   String
+  yardMobile    String?
+  yardEmail     String?
+  yardPrice     Decimal? @db.Decimal(18,2)
+  yardWarranty  Warranty?
+  yardMiles     Decimal? @db.Decimal(18,2)
+  yardShippingType String   
+  yardShippingCost Decimal? @db.Decimal(18,2)
+  yardOwnShippingAddress  String?
+  reason        String?
+  createdAt     DateTime @default(now())
+}
+
+
+
+model OrderEvent {
+  id        String   @id @default(cuid())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   String
+  type      String
+  payload   Json?
+  createdAt DateTime @default(now())
+}
