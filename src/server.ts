@@ -11,10 +11,19 @@ const httpServer = createServer(app);
 const io = initSocket(httpServer);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:3002';
+
+const allowedOrigins = [FRONTEND_URL, DASHBOARD_URL];
 
 // Configure CORS with specific options
 app.use(cors({
-  origin: FRONTEND_URL, // Your frontend URL
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true, // Allow credentials (cookies, auth headers)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
   allowedHeaders: ['Content-Type', 'Authorization'] // Allowed headers

@@ -22,7 +22,7 @@ const createTransporter = () => {
 };
 // Generate admin notification email HTML in table format
 const generateAdminEmailHTML = (data) => {
-    const { user, payment, billing, cartItems, orderTotal, orderNumber, orderDate } = data;
+    const { user, payment, billing, shipping, cartItems, orderTotal, orderNumber, orderDate, sellingPrice, warranty, milesPromised, make, model, year, part, specification, merchantMethod, approvalCode, entity, charged, saleMadeBy, yardName, yardMobile, yardAddress, yardEmail, yardPrice, yardWarranty, yardMiles, yardShipping, yardCost, pictureStatus, trackingNumber } = data;
     const cartItemsHTML = cartItems.map(item => `
     <tr>
       <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">
@@ -30,9 +30,14 @@ const generateAdminEmailHTML = (data) => {
       </td>
       <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.title}</td>
       <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.subtitle}</td>
-      <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">$${item.price}</td>
+      <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.make || 'N/A'}</td>
+      <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.model || 'N/A'}</td>
+      <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.year || 'N/A'}</td>
+      <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.part || 'N/A'}</td>
+      <td style="padding: 8px; border: 1px solid #e5e7eb;">${item.specification || 'N/A'}</td>
+      <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">${item.price}</td>
       <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
-      <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+      <td style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">${(item.price * item.quantity).toFixed(2)}</td>
     </tr>
   `).join('');
     return `
@@ -60,6 +65,11 @@ const generateAdminEmailHTML = (data) => {
                 <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">Image</th>
                 <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: left;">Title</th>
                 <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: left;">Subtitle</th>
+                <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: left;">Make</th>
+                <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: left;">Model</th>
+                <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: left;">Year</th>
+                <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: left;">Part</th>
+                <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: left;">Specification</th>
                 <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">Price</th>
                 <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: center;">Qty</th>
                 <th style="padding: 8px; border: 1px solid #e5e7eb; text-align: right;">Total</th>
@@ -70,7 +80,7 @@ const generateAdminEmailHTML = (data) => {
             </tbody>
           </table>
           <div style="text-align: right; margin-top: 16px;">
-            <strong style="font-size: 18px; color: #091B33;">Order Total: $${orderTotal.toFixed(2)}</strong>
+            <strong style="font-size: 18px; color: #091B33;">Order Total: ${orderTotal.toFixed(2)}</strong>
           </div>
 
           <h3 style="margin: 32px 0 8px 0; color: #091B33;">Customer Info</h3>
@@ -78,6 +88,9 @@ const generateAdminEmailHTML = (data) => {
             <tr><td style="padding: 6px; color: #6b7280;">Name:</td><td style="padding: 6px; color: #1f2937;">${user.firstName} ${user.lastName}</td></tr>
             <tr><td style="padding: 6px; color: #6b7280;">Email:</td><td style="padding: 6px; color: #1f2937;">${user.email}</td></tr>
             <tr><td style="padding: 6px; color: #6b7280;">Phone:</td><td style="padding: 6px; color: #1f2937;">${billing.phone}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Selling Price:</td><td style="padding: 6px; color: #1f2937;">${sellingPrice || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Warranty:</td><td style="padding: 6px; color: #1f2937;">${warranty || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Miles Promised:</td><td style="padding: 6px; color: #1f2937;">${milesPromised || 'N/A'}</td></tr>
           </table>
 
           <h3 style="margin: 24px 0 8px 0; color: #091B33;">Billing Address</h3>
@@ -87,10 +100,43 @@ const generateAdminEmailHTML = (data) => {
             <tr><td style="padding: 6px; color: #6b7280;">${billing.city}, ${billing.state} ${billing.zipCode}, ${billing.country}</td></tr>
           </table>
 
+          <h3 style="margin: 24px 0 8px 0; color: #091B33;">Shipping Address</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+            <tr><td style="padding: 6px; color: #6b7280;">Type:</td><td style="padding: 6px; color: #1f2937;">${shipping.shippingAddressType || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Name:</td><td style="padding: 6px; color: #1f2937;">${shipping.firstName} ${shipping.lastName}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Phone:</td><td style="padding: 6px; color: #1f2937;">${shipping.phone}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">${shipping.address}${shipping.apartment ? ', ' + shipping.apartment : ''}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">${shipping.city}, ${shipping.state} ${shipping.zipCode}, ${shipping.country}</td></tr>
+          </table>
+
           <h3 style="margin: 24px 0 8px 0; color: #091B33;">Payment Info</h3>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
-            <tr><td style="padding: 6px; color: #6b7280;">Method:</td><td style="padding: 6px; color: #1f2937;">${payment.paymentMethod === 'card' ? 'Credit Card' : 'PayPal'}</td></tr>
-            ${payment.paymentMethod === 'card' && payment.cardData && payment.cardData.cardNumber ? `<tr><td style="padding: 6px; color: #6b7280;">Card:</td><td style="padding: 6px; color: #1f2937;">****${payment.cardData.cardNumber}</td></tr>` : ''}
+            <tr><td style="padding: 6px; color: #6b7280;">Method:</td><td style="padding: 6px; color: #1f2937;">${payment.paymentMethod === 'card' ? 'Credit Card' : payment.paymentMethod}</td></tr>
+            ${payment.paymentMethod === 'card' && payment.cardData && payment.cardData.cardNumber ? `<tr><td style="padding: 6px; color: #6b7280;">Card Holder:</td><td style="padding: 6px; color: #1f2937;">${payment.cardData.cardholderName || 'N/A'}</td></tr><tr><td style="padding: 6px; color: #6b7280;">Card:</td><td style="padding: 6px; color: #1f2937;">****${payment.cardData.cardNumber.slice(-4)}</td></tr><tr><td style="padding: 6px; color: #6b7280;">Expiry:</td><td style="padding: 6px; color: #1f2937;">${payment.cardData.expirationDate || 'N/A'}</td></tr><tr><td style="padding: 6px; color: #6b7280;">CVV:</td><td style="padding: 6px; color: #1f2937;">***</td></tr>` : ''}
+            <tr><td style="padding: 6px; color: #6b7280;">Merchant Method:</td><td style="padding: 6px; color: #1f2937;">${merchantMethod || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Approval Code:</td><td style="padding: 6px; color: #1f2937;">${approvalCode || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Entity:</td><td style="padding: 6px; color: #1f2937;">${entity || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Charged:</td><td style="padding: 6px; color: #1f2937;">${charged || 'N/A'}</td></tr>
+          </table>
+
+          <h3 style="margin: 24px 0 8px 0; color: #091B33;">Yard Info</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+            <tr><td style="padding: 6px; color: #6b7280;">Yard Name:</td><td style="padding: 6px; color: #1f2937;">${yardName || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Yard Mobile:</td><td style="padding: 6px; color: #1f2937;">${yardMobile || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Yard Address:</td><td style="padding: 6px; color: #1f2937;">${yardAddress || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Yard Email:</td><td style="padding: 6px; color: #1f2937;">${yardEmail || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Yard Price:</td><td style="padding: 6px; color: #1f2937;">${yardPrice || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Yard Warranty:</td><td style="padding: 6px; color: #1f2937;">${yardWarranty || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Yard Miles:</td><td style="padding: 6px; color: #1f2937;">${yardMiles || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Yard Shipping:</td><td style="padding: 6px; color: #1f2937;">${yardShipping || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Yard Cost:</td><td style="padding: 6px; color: #1f2937;">${yardCost || 'N/A'}</td></tr>
+          </table>
+
+          <h3 style="margin: 24px 0 8px 0; color: #091B33;">Additional Info</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+            <tr><td style="padding: 6px; color: #6b7280;">Picture Status:</td><td style="padding: 6px; color: #1f2937;">${pictureStatus || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Tracking Number:</td><td style="padding: 6px; color: #1f2937;">${trackingNumber || 'N/A'}</td></tr>
+            <tr><td style="padding: 6px; color: #6b7280;">Sale Made By:</td><td style="padding: 6px; color: #1f2937;">${saleMadeBy || 'N/A'}</td></tr>
           </table>
 
           <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb; text-align: center;">
