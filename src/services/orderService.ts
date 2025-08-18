@@ -186,15 +186,20 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           },
         });
       }
-      
+
       // 6. Create YardInfo (if yardInfo is provided)
       if (yardInfo) {
-        await tx.yardInfo.create({
-          data: {
-            orderId: order.id,
-            ...yardInfo,
-          },
-        });
+        try {
+          await tx.yardInfo.create({
+            data: {
+              orderId: order.id,
+              ...yardInfo,
+            },
+          });
+          console.log('YardInfo created successfully for order:', order.id);
+        } catch (yardError) {
+          console.error('Error creating YardInfo:', yardError, yardInfo);
+        }
       }
 
       // Update order status to PAID if payment was made
@@ -208,6 +213,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           yardInfo: true,
         },
       });
+      console.log('Updated order with yardInfo:', updatedOrder);
 
       return updatedOrder;
     });

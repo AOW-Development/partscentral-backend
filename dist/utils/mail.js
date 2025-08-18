@@ -12,8 +12,8 @@ const createTransporter = () => {
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: false, // true for 465, false for other ports
         auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
+        // user: process.env.SMTP_USER,
+        // pass: process.env.SMTP_PASS,
         },
         tls: {
             rejectUnauthorized: false,
@@ -156,7 +156,7 @@ const sendOrderNotificationEmail = async (data) => {
         const adminEmail = process.env.ADMIN_EMAIL || 'admin@autosquare.us';
         const mailOptions = {
             from: `"PartsCentral.us Orders" <${process.env.SMTP_USER}>`,
-            to: adminEmail,
+            // to: adminEmail,
             subject: `New Order Received - ${data.orderNumber}`,
             html: generateAdminEmailHTML(data),
         };

@@ -1,14 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createOrder = void 0;
+exports.createOrder = exports.getOrders = void 0;
 const orderService_1 = require("../services/orderService");
 const socket_1 = require("../utils/socket");
+const getOrders = async (req, res) => {
+    try {
+        const orders = await (0, orderService_1.getOrders)();
+        res.status(200).json(orders);
+    }
+    catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+};
+exports.getOrders = getOrders;
 // import { sendOrderNotificationEmail } from '../utils/mail'; // Keep commented out for now
 const createOrder = async (req, res) => {
     try {
-        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal } = req.body;
+        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber } = req.body;
         // Validate incoming data (basic validation, more robust validation should be added)
-        if (!billingInfo || !shippingInfo || !customerInfo || !cartItems || !paymentInfo || totalAmount === undefined || subtotal === undefined) {
+        if (!billingInfo || !shippingInfo || !customerInfo || !cartItems || !paymentInfo || totalAmount === undefined || subtotal === undefined || !orderNumber) {
             return res.status(400).json({ error: 'Missing required order information.' });
         }
         const newOrder = await (0, orderService_1.createOrder)({
@@ -19,6 +30,7 @@ const createOrder = async (req, res) => {
             paymentInfo,
             totalAmount,
             subtotal,
+            orderNumber,
         });
         // Emit socket.io event
         const socketEventPayload = {
@@ -41,7 +53,7 @@ const createOrder = async (req, res) => {
     }
     catch (error) {
         console.error('Error creating order:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: error.message || 'Internal server error' });
     }
 };
 exports.createOrder = createOrder;
