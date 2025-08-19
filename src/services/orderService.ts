@@ -1,4 +1,12 @@
 import { PrismaClient, OrderSource, AddressType, PaymentStatus, OrderStatus } from '@prisma/client';
+import { getFrontendUrl } from '../utils/frontendUrl';
+
+// Example usage for backend-to-frontend call:
+// const dashboardUrl = getFrontendUrl('dashboard');
+// const mainUrl = getFrontendUrl('main');
+// fetch(`${dashboardUrl}/api/some-dashboard-route`)
+// fetch(`${mainUrl}/api/some-main-route`)
+
 
 const prisma = new PrismaClient();
 
@@ -202,6 +210,9 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
         }
       }
 
+      // Example usage for backend-to-frontend call (uncomment if needed):
+      // const dashboardUrl = getFrontendUrl('dashboard');
+      
       // Update order status to PAID if payment was made
       const finalStatus = paymentInfo ? OrderStatus.PAID : OrderStatus.PENDING;
       const updatedOrder = await tx.order.update({
@@ -213,8 +224,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           yardInfo: true,
         },
       });
-      console.log('Updated order with yardInfo:', updatedOrder);
-
+      
       return updatedOrder;
     });
   } catch (err) {
