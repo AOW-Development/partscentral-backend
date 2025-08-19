@@ -78,3 +78,92 @@ current yard info :
     
 
 Yard
+------------------------------
+curl "http://localhost:3001/api/products/v2/grouped-with-subparts?make=Audi&model=100&year=1994&part=Engine" -H "Accept: application/json" | jq
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   846  100   846    0     0    458      0  0:00:01  0:00:01 --:--:--   458
+{
+  "make": "Audi",
+  "model": "100",
+  "year": "1994",
+  "part": "Engine",
+  "subParts": [
+    {
+      "id": 1387,
+      "name": "5 cylinder (2.2L)",
+      "partTypeId": 1
+    },
+    {
+      "id": 1388,
+      "name": "6 cylinder (2.8L)",
+      "partTypeId": 1
+    }
+  ],
+  "groupedVariants": [
+    {
+      "subPart": {
+        "id": 1387,
+        "name": "5 cylinder (2.2L)",
+        "partTypeId": 1
+      },
+      "variants": [
+        {
+          "id": 376,
+          "sku": "AUDI-100-1994-ENGINE-5CYLINDER(2.2L)-NOMILES",
+          "productId": 3101,
+          "miles": null,
+          "actualprice": 0,
+          "discountedPrice": 0,
+          "inStock": false,
+          "product": {
+            "id": 3101,
+            "sku": "AUDI-100-1994-ENGINE-5CYLINDER(2.2L)",
+            "images": [],
+            "description": null
+          }
+        }
+      ]
+    },
+    {
+      "subPart": {
+        "id": 1388,
+        "name": "6 cylinder (2.8L)",
+        "partTypeId": 1
+      },
+      "variants": [
+        {
+          "id": 377,
+          "sku": "AUDI-100-1994-ENGINE-6CYLINDER(2.8L)-NOMILES",
+          "productId": 3102,
+          "miles": null,
+          "actualprice": 0,
+          "discountedPrice": 0,
+          "inStock": false,
+          "product": {
+            "id": 3102,
+            "sku": "AUDI-100-1994-ENGINE-6CYLINDER(2.8L)",
+            "images": [],
+            "description": null
+          }
+        }
+      ]
+    }
+  ]
+}
+
+
+See how api GET's the data here .
+
+Set these 2 data dynamically in Order :
+(remove dummy miles data)
+groupedVariants.variants.miles == miles primised
+<label className="block text-white/60 text-sm mb-2">
+                      Miles Promised
+                    </label>
+
+groupedVariants.subPart.name == specification
+ <label className="block text-white/60 text-sm mb-2">
+                      Specification *
+                    </label>
+Also there is issue with specificaion "Property 'specification' does not exist on type 'ProductVariant'.ts(2339)"

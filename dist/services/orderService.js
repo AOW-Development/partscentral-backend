@@ -2,6 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getOrders = exports.createOrder = void 0;
 const client_1 = require("@prisma/client");
+// Example usage for backend-to-frontend call:
+// const dashboardUrl = getFrontendUrl('dashboard');
+// const mainUrl = getFrontendUrl('main');
+// fetch(`${dashboardUrl}/api/some-dashboard-route`)
+// fetch(`${mainUrl}/api/some-main-route`)
 const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
     try {
@@ -126,13 +131,21 @@ const createOrder = async (payload) => {
             }
             // 6. Create YardInfo (if yardInfo is provided)
             if (yardInfo) {
-                await tx.yardInfo.create({
-                    data: {
-                        orderId: order.id,
-                        ...yardInfo,
-                    },
-                });
+                try {
+                    await tx.yardInfo.create({
+                        data: {
+                            orderId: order.id,
+                            ...yardInfo,
+                        },
+                    });
+                    console.log('YardInfo created successfully for order:', order.id);
+                }
+                catch (yardError) {
+                    console.error('Error creating YardInfo:', yardError, yardInfo);
+                }
             }
+            // Example usage for backend-to-frontend call (uncomment if needed):
+            // const dashboardUrl = getFrontendUrl('dashboard');
             // Update order status to PAID if payment was made
             const finalStatus = paymentInfo ? client_1.OrderStatus.PAID : client_1.OrderStatus.PENDING;
             const updatedOrder = await tx.order.update({

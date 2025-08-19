@@ -1,12 +1,4 @@
 import { PrismaClient, OrderSource, AddressType, PaymentStatus, OrderStatus } from '@prisma/client';
-import { getFrontendUrl } from '../utils/frontendUrl';
-
-// Example usage for backend-to-frontend call:
-// const dashboardUrl = getFrontendUrl('dashboard');
-// const mainUrl = getFrontendUrl('main');
-// fetch(`${dashboardUrl}/api/some-dashboard-route`)
-// fetch(`${mainUrl}/api/some-main-route`)
-
 
 const prisma = new PrismaClient();
 
@@ -194,25 +186,17 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           },
         });
       }
-
+      
       // 6. Create YardInfo (if yardInfo is provided)
       if (yardInfo) {
-        try {
-          await tx.yardInfo.create({
-            data: {
-              orderId: order.id,
-              ...yardInfo,
-            },
-          });
-          console.log('YardInfo created successfully for order:', order.id);
-        } catch (yardError) {
-          console.error('Error creating YardInfo:', yardError, yardInfo);
-        }
+        await tx.yardInfo.create({
+          data: {
+            orderId: order.id,
+            ...yardInfo,
+          },
+        });
       }
 
-      // Example usage for backend-to-frontend call (uncomment if needed):
-      // const dashboardUrl = getFrontendUrl('dashboard');
-      
       // Update order status to PAID if payment was made
       const finalStatus = paymentInfo ? OrderStatus.PAID : OrderStatus.PENDING;
       const updatedOrder = await tx.order.update({
@@ -224,7 +208,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           yardInfo: true,
         },
       });
-      
+
       return updatedOrder;
     });
   } catch (err) {

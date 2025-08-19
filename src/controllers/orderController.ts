@@ -5,17 +5,7 @@ import { getIO } from '../utils/socket';
 export const getOrders = async (req: Request, res: Response) => {
   try {
     const orders = await getOrdersService();
-    // Map and flatten orders to match frontend expectations
-    const mappedOrders = orders.map((order: any) => ({
-      id: order.id,
-      name: order.customer?.full_name || '',
-      date: order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '',
-      email: order.customer?.email || '',
-      mobile: order.shippingSnapshot?.phone || '',
-      sum: (typeof order.totalAmount === 'object' && typeof order.totalAmount.toNumber === 'function' ? order.totalAmount.toNumber() : order.totalAmount).toString(),
-      status: order.status,
-    }));
-    res.status(200).json(mappedOrders);
+    res.status(200).json(orders);
   } catch (error: any) {
     console.error('Error fetching orders:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
@@ -26,7 +16,7 @@ export const getOrders = async (req: Request, res: Response) => {
 
 export const createOrder = async (req: Request, res: Response) => {
   try {
-    const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, yardInfo } = req.body;
+    const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber } = req.body;
 
     // Validate incoming data (basic validation, more robust validation should be added)
     if (!billingInfo || !shippingInfo || !customerInfo || !cartItems || !paymentInfo || totalAmount === undefined || subtotal === undefined || !orderNumber) {
@@ -43,7 +33,6 @@ export const createOrder = async (req: Request, res: Response) => {
     totalAmount,
     subtotal,
     orderNumber,
-    yardInfo, // Pass yardInfo to the service
   });
 
   // Emit socket.io event
