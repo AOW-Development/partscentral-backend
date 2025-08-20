@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import { createServer } from 'http';
 import { initSocket } from './utils/socket';
@@ -11,7 +12,7 @@ const httpServer = createServer(app);
 const io = initSocket(httpServer);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:3002';
+const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:4000';
 
 const allowedOrigins = [FRONTEND_URL, DASHBOARD_URL];
 
@@ -21,6 +22,7 @@ app.use(cors({
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      console.log('CORS blocked for origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
