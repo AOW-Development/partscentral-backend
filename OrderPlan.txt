@@ -139,3 +139,72 @@ model OrderEvent {
     payload     Json?
     created_at      DateTime    @default(now())
 }
+
+----------------------------
+
+Add PUT api for admin dashboard frontend :
+
+See there is already POST method is implemented so it will use that same page (since there is interface all the fields/input are metioned so).
+See backend files :
+backend/partscentral-db/src/routes/order.routes.ts
+backend/partscentral-db/src/controllers/orderController.ts
+backend/partscentral-db/src/services/orderService.ts
+
+also check prisma.schema here : 
+backend/partscentral-db/prisma/schema.prisma
+
+mapping/populating correctlly api response with interface fields/existing inputs is a big issue so read schema and 
+partscentral-dashboard/utils/orderApi.ts and partscentral-dashboard/app/orders/[id]/page.tsx
+which are alredy mapped for POST method of Order so you can take a look there.
+
+Also would you write in a seperate file cause files are getting bigger and bigger and Debugging is getting harder.
+
+as you can see schema there are some json snapshots , some has 1-1 or 1-many relationship with other tables so how would you map that .
+
+DONT MAKE MESS OF CODE WRITE CLEAR AND SPLITTING CODE , MAKE A SEPERATE FILE IF CAN.
+
+
+you have to map api response with dropdown/input fileds so be careful there and if you cant find that then just ask there.
+do you want me to provide you with curl GET response of Order so you can see ?? or schema is enough?? 
+
+--> special case : in yardinfo when it gets updated first it will take "current yard info" and save them in "Yard History" table(has 1-m with Order so there can be more than one yard history for a Order) and show that as "yard history" (see frontend has yard history implemented) and current updated yard info will become "current yard info" (ofc if current yard info is updated). so how will you approach this case ?
+
+How wil you approach this ??  Explain at each step.
+
+new instructions :
+
+1) make sure you include all the fileds and PUT is updating + mapping all the schema/response fields in tables (Order table,OrderItem,payment,customer,yardInfo,yardHistory,address,payment)
+
+new instructoin :
+
+fire this PUT request with "details" button (retrives and updates)  and save with "save" button.
+
+so trigger the update order from : 
+
+<Link
+                                href={`/orders/${order.id}`}
+                                className="text-black text-base px-2 py-1 text-left rounded hover:bg-gray-200"
+                                onClick={() => setOpenActionMenu(null)}
+                                type="button"
+                              >
+                                Details
+                              </Link>
+
+                              which is in file partscentral-dashboard/app/orders/page.tsx
+
+                              save or update from button using "save" which is in partscentral-dashboard/app/orders/[id]/page.tsx
+                              continue now.
+
+
+GET  order is alredy there which GET's all order on every mount / socket even listend .
+You can use this existing one .
+See fetchOrders in partscentral-dashboard/app/orders/page.tsx
+
+so this file partscentral-dashboard/app/orders/[id]/page.tsx is being used for both :
+
+creating a new Order -> handlerCreateOrder -> createOrderFromAdmin is in file /utils/orderApi -> saving/POST Order with "save" button
+Updating Order -> handleUpdateOrder -> updateOrderFromAdmin  is in file /utils/updateOrderApi -> use same "save" button for updating as well. 
+
+So now add handleUpdateOrder to "save" button. it is possible to add 2 handlers to a single button right ??
+Also in const [cartItems, setCartItems] = useState<any[]>([]); has type err above handleUpdateOrder so fix that . line 656.
+Now continue.

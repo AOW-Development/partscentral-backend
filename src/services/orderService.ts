@@ -233,3 +233,22 @@ export const getOrders = async (): Promise<any> => {
     throw err;
   }
 };
+
+export const getOrderById = async (orderId: string): Promise<any> => {
+  try {
+    return await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        customer: true,
+        items: true,
+        payments: true,
+        yardInfo: true,
+        yardHistory: true,
+        address: true,
+      },
+    });
+  } catch (err) {
+    console.error(`Error fetching order ${orderId}:`, err);
+    throw err;
+  }
+};

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { createOrder as createOrderService, getOrders as getOrdersService } from '../services/orderService';
+import { createOrder as createOrderService, getOrders as getOrdersService, getOrderById as getOrderByIdService } from '../services/orderService';
+import { updateOrder as updateOrderService } from '../services/updateOrderService';
 import { getIO } from '../utils/socket';
 
 export const getOrders = async (req: Request, res: Response) => {
@@ -8,6 +9,21 @@ export const getOrders = async (req: Request, res: Response) => {
     res.status(200).json(orders);
   } catch (error: any) {
     console.error('Error fetching orders:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+export const getOrderById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const order = await getOrderByIdService(id);
+    if (order) {
+      res.status(200).json(order);
+    } else {
+      res.status(404).json({ error: 'Order not found' });
+    }
+  } catch (error: any) {
+    console.error(`Error fetching order ${req.params.id}:`, error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
@@ -60,3 +76,17 @@ export const createOrder = async (req: Request, res: Response) => {
   console.error('Error creating order:', error);
   res.status(500).json({ error: error.message || 'Internal server error' });
 }}
+
+export const updateOrder = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const orderData = req.body;
+
+    const updatedOrder = await updateOrderService(id, orderData);
+
+    res.status(200).json(updatedOrder);
+  } catch (error: any) {
+    console.error(`Error updating order ${req.params.id}:`, error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
