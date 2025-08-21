@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrders = exports.createOrder = void 0;
+exports.getOrderById = exports.getOrders = exports.createOrder = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
@@ -171,3 +171,23 @@ const getOrders = async () => {
     }
 };
 exports.getOrders = getOrders;
+const getOrderById = async (orderId) => {
+    try {
+        return await prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                customer: true,
+                items: true,
+                payments: true,
+                yardInfo: true,
+                yardHistory: true,
+                address: true,
+            },
+        });
+    }
+    catch (err) {
+        console.error(`Error fetching order ${orderId}:`, err);
+        throw err;
+    }
+};
+exports.getOrderById = getOrderById;

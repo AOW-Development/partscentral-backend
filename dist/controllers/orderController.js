@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createOrder = exports.getOrders = void 0;
+exports.updateOrder = exports.createOrder = exports.getOrderById = exports.getOrders = void 0;
 const orderService_1 = require("../services/orderService");
+const updateOrderService_1 = require("../services/updateOrderService");
 const socket_1 = require("../utils/socket");
 const getOrders = async (req, res) => {
     try {
@@ -14,6 +15,23 @@ const getOrders = async (req, res) => {
     }
 };
 exports.getOrders = getOrders;
+const getOrderById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await (0, orderService_1.getOrderById)(id);
+        if (order) {
+            res.status(200).json(order);
+        }
+        else {
+            res.status(404).json({ error: 'Order not found' });
+        }
+    }
+    catch (error) {
+        console.error(`Error fetching order ${req.params.id}:`, error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+};
+exports.getOrderById = getOrderById;
 // import { sendOrderNotificationEmail } from '../utils/mail'; // Keep commented out for now
 const createOrder = async (req, res) => {
     try {
@@ -57,3 +75,16 @@ const createOrder = async (req, res) => {
     }
 };
 exports.createOrder = createOrder;
+const updateOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const orderData = req.body;
+        const updatedOrder = await (0, updateOrderService_1.updateOrder)(id, orderData);
+        res.status(200).json(updatedOrder);
+    }
+    catch (error) {
+        console.error(`Error updating order ${req.params.id}:`, error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+};
+exports.updateOrder = updateOrder;
