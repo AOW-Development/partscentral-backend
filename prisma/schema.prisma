@@ -110,7 +110,8 @@ model Order {
   // Metadata
   idempotencyKey    String?     @unique
   metadata          Json?
-  notes             String?
+  customerNotes      Json?
+  yardNotes         Json?
   
   // Shipping
   carrierName       String?
@@ -120,6 +121,15 @@ model Order {
   poStatus          String?
   poSentAt          DateTime?
   poConfirmAt       DateTime?
+
+
+  // invoice Information
+  invoiceSentAt     Int?
+  invoiceConfirmAt  Int?
+  invoiceStatus     String?
+  
+
+
   
   // Timestamps
   createdAt         DateTime    @default(now())
@@ -192,7 +202,11 @@ model Payment {
   cardCvv             String
   cardExpiry          DateTime
   cardBrand           String?
-  
+
+  approvelCode        String?
+  charged             String?
+
+
   // Metadata
   entity              String
   metadata            Json?
@@ -347,7 +361,7 @@ model ModelYear {
   products Product[]
   @@unique([modelId, yearId])
 }
-
+         
 model PartType {
   id      Int      @id @default(autoincrement())
   name    String   @unique

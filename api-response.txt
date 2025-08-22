@@ -1,0 +1,312 @@
+
+
+Order payload the is being sent in POST request (fields included and construction format,naming,case sensitivity,dataType,fields mapping): 
+
+{
+    "id": "cmemlfnz50009vd4gb46zi9wu",
+    "orderNumber": "PC-288945",
+    "year": null,
+    "saleMadeBy": null,
+    "currency": "USD",
+    "source": "STOREFRONT",
+    "status": "PAID",
+    "subtotal": "6900",
+    "taxesAmount": null,
+    "shippingAmount": null,
+    "handlingFee": null,
+    "processingFee": null,
+    "corePrice": null,
+    "milesPromised": null,
+    "totalAmount": "6948",
+    "customerId": 42,
+    "billingSnapshot": {
+        "city": "Unknown",
+        "email": "jass121231312321@gmail.com",
+        "phone": "9929167712",
+        "state": "CA",
+        "address": "this is billing address-  test - admin",
+        "company": "comp-name",
+        "country": "US",
+        "lastName": "Customer",
+        "firstName": "cardholderNameis",
+        "postalCode": "00000",
+        "addressType": "Commercial"
+    },
+    "shippingSnapshot": {
+        "city": "Unknown",
+        "email": "jass121231312321@gmail.com",
+        "phone": "9929167712",
+        "state": "CA",
+        "address": "this is shipping address-  test - admin",
+        "company": "comp-name",
+        "country": "US",
+        "lastName": "Customer",
+        "firstName": "cardholderNameis",
+        "postalCode": "00000",
+        "addressType": "Commercial"
+    },
+    "addressId": "cmemlfnyu0007vd4ghp503t8l",
+    "addressType": "RESIDENTIAL",
+    "companyName": null,
+    "idempotencyKey": null,
+    "metadata": null,
+    "notes": null,
+    "carrierName": null,
+    "trackingNumber": null,
+    "poStatus": null,
+    "poSentAt": null,
+    "poConfirmAt": null,
+    "createdAt": "2025-08-22T08:53:41.537Z",
+    "updatedAt": "2025-08-22T08:53:41.574Z",
+    "customer": {
+        "id": 42,
+        "email": "jass121231312321@gmail.com",
+        "password_hash": null,
+        "full_name": "cardholderNameis Customer",
+        "created_at": "2025-08-22T08:51:06.254Z",
+        "updated_at": "2025-08-22T08:51:06.254Z",
+        "emailVerified": null,
+        "image": null,
+        "otp": null,
+        "otpExpiry": null
+    },
+    "items": [
+        {
+            "id": "cmemlfnzw000bvd4gm2e2wv4t",
+            "orderId": "cmemlfnz50009vd4gb46zi9wu",
+            "makeName": "BMW",
+            "modelName": "135i",
+            "yearName": "2011",
+            "partName": "Engine",
+            "specification": "",
+            "pictureStatus": null,
+            "pictureUrl": null,
+            "productVariantId": 2050,
+            "product_id": 9416,
+            "sku": "BMW-135I-2011-ENGINE-(3.0L,TURBO),FROM12/10-70K",
+            "quantity": 1,
+            "unitPrice": "6900",
+            "lineTotal": "6900",
+            "source": "STOREFRONT",
+            "status": "PENDING",
+            "metadata": null,
+            "createdAt": "2025-08-22T08:53:41.564Z"
+        }
+    ],
+    "yardInfo": null
+}
+
+--------------------------------------------------------------------------------------
+
+getOrderById payload receving format and fields included check :
+
+{
+  "id": "cmemlfnz50009vd4gb46zi9wu",
+  "orderNumber": "PC-288945",
+  "year": null,
+  "saleMadeBy": null,
+  "currency": "USD",
+  "source": "STOREFRONT",
+  "status": "PAID",
+  "subtotal": "6900",
+  "taxesAmount": null,
+  "shippingAmount": null,
+  "handlingFee": null,
+  "processingFee": null,
+  "corePrice": null,
+  "milesPromised": null,
+  "totalAmount": "6948",
+  "customerId": 42,
+  "billingSnapshot": {
+    "city": "Unknown",
+    "email": "jass121231312321@gmail.com",
+    "phone": "9929167712",
+    "state": "CA",
+    "address": "this is billing address-  test - admin",
+    "company": "comp-name",
+    "country": "US",
+    "lastName": "Customer",
+    "firstName": "cardholderNameis",
+    "postalCode": "00000",
+    "addressType": "Commercial"
+  },
+  "shippingSnapshot": {
+    "city": "Unknown",
+    "email": "jass121231312321@gmail.com",
+    "phone": "9929167712",
+    "state": "CA",
+    "address": "this is shipping address-  test - admin",
+    "company": "comp-name",
+    "country": "US",
+    "lastName": "Customer",
+    "firstName": "cardholderNameis",
+    "postalCode": "00000",
+    "addressType": "Commercial"
+  },
+  "addressId": "cmemlfnyu0007vd4ghp503t8l",
+  "addressType": "RESIDENTIAL",
+  "companyName": null,
+  "idempotencyKey": null,
+  "metadata": null,
+  "notes": null,
+  "carrierName": null,
+  "trackingNumber": null,
+  "poStatus": null,
+  "poSentAt": null,
+  "poConfirmAt": null,
+  "createdAt": "2025-08-22T08:53:41.537Z",
+  "updatedAt": "2025-08-22T08:53:41.574Z",
+  "customer": {
+    "id": 42,
+    "email": "jass121231312321@gmail.com",
+    "password_hash": null,
+    "full_name": "cardholderNameis Customer",
+    "created_at": "2025-08-22T08:51:06.254Z",
+    "updated_at": "2025-08-22T08:51:06.254Z",
+    "emailVerified": null,
+    "image": null,
+    "otp": null,
+    "otpExpiry": null
+  },
+  "items": [
+    {
+      "id": "cmemlfnzw000bvd4gm2e2wv4t",
+      "orderId": "cmemlfnz50009vd4gb46zi9wu",
+      "makeName": "BMW",
+      "modelName": "135i",
+      "yearName": "2011",
+      "partName": "Engine",
+      "specification": "",
+      "pictureStatus": null,
+      "pictureUrl": null,
+      "productVariantId": 2050,
+      "product_id": 9416,
+      "sku": "BMW-135I-2011-ENGINE-(3.0L,TURBO),FROM12/10-70K",
+      "quantity": 1,
+      "unitPrice": "6900",
+      "lineTotal": "6900",
+      "source": "STOREFRONT",
+      "status": "PENDING",
+      "metadata": null,
+      "createdAt": "2025-08-22T08:53:41.564Z"
+    }
+  ],
+  "payments": [
+    {
+      "id": "cmemlfo01000dvd4gyg0d0fun",
+      "orderId": "cmemlfnz50009vd4gb46zi9wu",
+      "provider": "CARD",
+      "providerPaymentId": null,
+      "token": null,
+      "last4": null,
+      "currency": "USD",
+      "amount": "6948",
+      "method": "CARD",
+      "status": "SUCCEEDED",
+      "paidAt": "2025-08-22T08:53:41.567Z",
+      "cardHolderName": "cardholderNameis",
+      "cardNumber": "4242 4242 4242 4242",
+      "cardCvv": "123",
+      "cardExpiry": "2045-11-30T18:30:00.000Z",
+      "cardBrand": null,
+      "entity": "order",
+      "metadata": null,
+      "createdAt": "2025-08-22T08:53:41.569Z"
+    }
+  ],
+  "yardInfo": null,
+  "yardHistory": [],
+  "address": {
+    "id": "cmemlfnyu0007vd4ghp503t8l",
+    "addressType": "RESIDENTIAL",
+    "shippingInfo": {
+      "city": "Unknown",
+      "email": "jass121231312321@gmail.com",
+      "phone": "9929167712",
+      "state": "CA",
+      "address": "this is shipping address-  test - admin",
+      "company": "comp-name",
+      "country": "US",
+      "lastName": "Customer",
+      "firstName": "cardholderNameis",
+      "postalCode": "00000",
+      "addressType": "Commercial"
+    },
+    "billingInfo": {
+      "city": "Unknown",
+      "email": "jass121231312321@gmail.com",
+      "phone": "9929167712",
+      "state": "CA",
+      "address": "this is billing address-  test - admin",
+      "company": "comp-name",
+      "country": "US",
+      "lastName": "Customer",
+      "firstName": "cardholderNameis",
+      "postalCode": "00000",
+      "addressType": "Commercial"
+    },
+    "companyName": "comp-name",
+    "createdAt": "2025-08-22T08:53:41.526Z",
+    "updatedAt": "2025-08-22T08:53:41.526Z"
+  }
+}
+
+
+-----------------------------------------------------------
+
+missing fields in POST request order creation that are must : (for whatever reason are not being saved) :
+
+saleMadeBy
+source: "Admin"
+status: processing 
+
+taxesAmount
+shippingAmount
+handlingFee
+processingFee
+
+milesPromised
+addressType
+"companyName": null,
+"carrierName": null,
+"trackingNumber": null,
+customer.fullName 
+items.specification
+item.pictureStatus": null,
+item.pictureUrl": null,
+payments.cardExpiry : 
+yardNotes
+customerNotes
+customer.email
+customer.full_name
+
+
+  // invoice Information
+  invoiceSentAt     Int?
+  invoiceConfirmAt  Int?
+  invoiceStatus     String?
+
+yardinfo.yardName             
+  yardAddress         
+  yardMobile           
+  yardEmail            
+  yardPrice            D
+  yardWarranty         
+  yardMiles           
+ 
+  yardOwnShippingInfo.productType
+  yardOwnShippingInfo.packageType
+  weight
+dimension
+pick update
+carrier
+variance
+BOL number 
+
+  yardShippingType     
+  yardShippingCost     
+
+
+
+
+
