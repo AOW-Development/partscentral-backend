@@ -97,7 +97,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           shippingSnapshot: shippingInfo,
           addressId: newAddress.id,
           addressType: addressType || AddressType.RESIDENTIAL,
-      
+          // notes,
           carrierName,
           trackingNumber,
           saleMadeBy,

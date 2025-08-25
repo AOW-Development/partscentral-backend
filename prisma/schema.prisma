@@ -106,11 +106,13 @@ model Order {
   address           Address?    @relation(fields: [addressId], references: [id])
   addressType       AddressType
   companyName       String?
+  shippingAddress   String?
+  billingAddress    String?
   
   // Metadata
   idempotencyKey    String?     @unique
   metadata          Json?
-  customerNotes      Json?
+  customerNotes     Json?
   yardNotes         Json?
   
   // Shipping
@@ -169,8 +171,6 @@ model OrderItem {
   lineTotal       Decimal   @db.Decimal(18,2)
   
   // Metadata
-  source          OrderSource @default(STOREFRONT)
-  status          OrderStatus @default(PENDING)
   metadata        Json?
   
   // Timestamps
@@ -426,5 +426,11 @@ model ProductImage {
 
 
 
-
+model Lead {
+  id         Int      @id @default(autoincrement())
+  lead_id    String   @unique
+  form_id    String
+  created_at DateTime @default(now())
+  data       Json
+}
 

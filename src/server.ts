@@ -5,6 +5,7 @@ import { initSocket } from './utils/socket';
 import productRoutes from './routes/productRoutes';
 import authRoutes from './routes/authRoutes';
 import orderRoutes from './routes/order.routes';
+import leadRoutes from './routes/leadRoutes';
 import cors from 'cors';
 
 const app = express();
@@ -36,6 +37,7 @@ app.use(express.json());
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api', leadRoutes);
 
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {

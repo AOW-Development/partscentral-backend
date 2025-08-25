@@ -306,7 +306,77 @@ BOL number
   yardShippingType     
   yardShippingCost     
 
+billingAddress
+shippingAddress 
+
+
+---------------------------------------
+
+Must include from schema in  POSTing Order : 
+
+table names :
+
+Order
+orderItem
+Payment
+Customer
+YardInfo
 
 
 
+Name in prisma.schmema file = name in form data or used in input fields in jsx
 
+order.year              = formData.year
+order.saleMadeBy     = formData.saleMadeBy    
+       
+order.source           = set it to "Admin"  
+order.status
+order.shippingAddress = formData.shippingAddress
+order.billingAddress
+order.addressType
+order.companyName
+order.customerNotes // this is json
+order.yardNotes   // this is json so make sure all values are sent here 
+order.carrierName
+order.trackingNumber = formData.trackingNumber
+
+orderItem.specification
+orderItem.pictureStatus
+orderItem.pictureUrl
+
+
+Payment.method
+Payment.approvelCode
+Payment.charged
+Payment.entity
+
+Customer.email
+Customer.full_name
+
+
+YardInfo.yardName             
+YardInfo.yardAddress          
+YardInfo.yardMobile           
+YardInfo.yardEmail            
+YardInfo.yardPrice        
+YardInfo.yardWarranty      
+YardInfo.yardMiles        
+YardInfo.yardOwnShippingInfo{ // this is json data type in schema
+  ProdcutType
+  PackageType
+  weight
+  dimension
+  pickUpDate
+  carrier
+  Price
+  variance
+  BOL number
+}
+YardInfo.yardShippingType     
+YardInfo.yardShippingCost    
+
+(1) make sure all of these fields are mapping correctly with form data in partscentral-dashboard/app/orders/[id]/page.tsx 
+(2) check partscentral-dashboard/utils/orderApi.ts and see all the fields are being used correctly here in Order payload construction,data type is correct , name is correct ,shpae is correct .
+(3) check backend/partscentral-db/src/services/orderService.ts and make sure it has required fields and it is correctly being used 
+// also you can checj schema here : backend/partscentral-db/prisma/schema.prisma  // check controller here : backend/partscentral-db/src/controllers/orderController.ts
+(4) EACH AND EVERY FiELD  HERE IS MUST SO MAKE SURE YOU INVCLUDE EVERY SINGLE FIELD IN POST REQ. PAYLLOAD and Feild IS BWING SAVED .
