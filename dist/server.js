@@ -10,6 +10,7 @@ const socket_1 = require("./utils/socket");
 const productRoutes_1 = __importDefault(require("./routes/productRoutes"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const order_routes_1 = __importDefault(require("./routes/order.routes"));
+const leadRoutes_1 = __importDefault(require("./routes/leadRoutes"));
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
@@ -36,6 +37,7 @@ app.use(express_1.default.json());
 app.use('/api/products', productRoutes_1.default);
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/orders', order_routes_1.default);
+app.use('/api', leadRoutes_1.default);
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

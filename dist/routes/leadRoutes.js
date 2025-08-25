@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const leadController_1 = require("../controllers/leadController");
+const router = (0, express_1.Router)();
+router.get('/leads', leadController_1.getLeadsController);
+router.get('/webhook', leadController_1.webhookVerificationController);
+router.post('/webhook', leadController_1.webhookController);
+router.post('/leads/sync', leadController_1.syncLeadsController);
+exports.default = router;

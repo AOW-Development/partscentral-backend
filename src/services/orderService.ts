@@ -157,8 +157,8 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
               yearName: yearName,
               partName: partName,
               specification: specification,
-              source: source || OrderSource.STOREFRONT,
-              status: OrderStatus.PENDING,
+              // source: source || OrderSource.STOREFRONT,
+              // status: OrderStatus.PENDING,
             },
           });
         }

@@ -2,6 +2,7 @@
 import { PrismaClient } from '@prisma/client';
 import { getIO } from '../utils/socket';
 import fetch from 'node-fetch';
+import { MetaLead, CreateLeadData } from '../types/lead';
 
 const prisma = new PrismaClient();
 
@@ -13,12 +14,12 @@ export const getLeads = async () => {
   });
 };
 
-export const createLead = async (data: any) => {
+export const createLead = async (data: CreateLeadData) => {
   const lead = await prisma.lead.create({
     data: {
       lead_id: data.id,
       form_id: data.form_id,
-      data: data.field_data,
+      data: data.field_data as any,
     },
   });
   return lead;
@@ -39,13 +40,15 @@ export const processWebhook = async (payload: any) => {
     if (!response.ok) {
       throw new Error(`Failed to fetch lead data from Meta: ${response.statusText}`);
     }
-    const leadData = await response.json();
+    
+    const leadData: any = await response.json();
 
     const newLead = await prisma.lead.create({
         data: {
           lead_id: leadData.id,
           form_id: formId,
-          data: leadData.field_data,
+          data: leadData.field_data as any,
+          created_at: leadData.created_time ? new Date(leadData.created_time) : new Date(),
         },
       });
 
@@ -66,12 +69,20 @@ export const syncLeadsFromMeta = async (formId: string) => {
     }
   
     let newLeadsCount = 0;
-    // Request field_data directly in the paginated request
-    let url = `https://graph.facebook.com/v19.0/${formId}/leads?access_token=${accessToken}&fields=field_data&limit=100`;
+    // Request field_data and created_time in the paginated request
+    let url = `https://graph.facebook.com/v19.0/${formId}/leads?access_token=${accessToken}&fields=id,field_data,created_time&limit=100`;
   
     while (url) {
       const response = await fetch(url);
-      const jsonResponse = await response.json();
+      const jsonResponse = await response.json() as {
+        data?: MetaLead[];
+        paging?: {
+          next?: string;
+        };
+        error?: {
+          message: string;
+        };
+      };
   
       if (!response.ok) {
         throw new Error(`Failed to fetch leads from Meta: ${jsonResponse.error?.message || response.statusText}`);
@@ -80,7 +91,7 @@ export const syncLeadsFromMeta = async (formId: string) => {
       const leads = jsonResponse.data;
   
       if (leads) {
-          for (const leadData of leads) {
+          for (const leadData of leads as MetaLead[]) {
               const existingLead = await prisma.lead.findUnique({
                 where: { lead_id: leadData.id },
               });
@@ -90,7 +101,8 @@ export const syncLeadsFromMeta = async (formId: string) => {
                     data: {
                       lead_id: leadData.id,
                       form_id: formId,
-                      data: leadData.field_data,
+                      data: leadData.field_data as any,
+                      created_at: leadData.created_time ? new Date(leadData.created_time) : new Date(),
                     },
                   });
                   newLeadsCount++;
@@ -98,7 +110,7 @@ export const syncLeadsFromMeta = async (formId: string) => {
             }
       }
   
-      url = jsonResponse.paging?.next;
+      url = jsonResponse.paging?.next || '';
     }
   
     return { newLeadsCount };

@@ -41,7 +41,7 @@ const createOrder = async (payload) => {
                     shippingSnapshot: shippingInfo,
                     addressId: newAddress.id,
                     addressType: addressType || client_1.AddressType.RESIDENTIAL,
-                    notes,
+                    // notes,
                     carrierName,
                     trackingNumber,
                     saleMadeBy,
@@ -97,8 +97,8 @@ const createOrder = async (payload) => {
                             yearName: yearName,
                             partName: partName,
                             specification: specification,
-                            source: source || client_1.OrderSource.STOREFRONT,
-                            status: client_1.OrderStatus.PENDING,
+                            // source: source || OrderSource.STOREFRONT,
+                            // status: OrderStatus.PENDING,
                         },
                     });
                 }
