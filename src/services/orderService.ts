@@ -17,6 +17,8 @@ interface CreateOrderPayload {
   trackingNumber?: string;
   saleMadeBy?: string;
   yardInfo?: any;
+  customerNotes?: string;
+  yardNotes?: string;
   // Add all other fields from the admin dashboard form
   taxesAmount?: number;
   handlingFee?: number;
@@ -45,8 +47,10 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       notes,
       carrierName,
       trackingNumber,
-      saleMadeBy,
+      saleMadeBy, 
       yardInfo,
+      customerNotes,
+      yardNotes,
       taxesAmount,
       handlingFee,
       processingFee,
@@ -101,6 +105,8 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           carrierName,
           trackingNumber,
           saleMadeBy,
+          customerNotes: customerNotes ? JSON.parse(customerNotes) : null,
+          yardNotes : yardNotes ? JSON.parse(yardNotes) : null,
           taxesAmount,
           handlingFee,
           processingFee,

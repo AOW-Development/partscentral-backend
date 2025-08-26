@@ -49,6 +49,8 @@ export const createOrder = async (req: Request, res: Response) => {
     totalAmount,
     subtotal,
     orderNumber,
+    customerNotes: req.body.customerNotes,  
+    yardNotes: req.body.yardNotes, 
   });
 
   // Emit socket.io event

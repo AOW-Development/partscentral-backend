@@ -208,3 +208,24 @@ Updating Order -> handleUpdateOrder -> updateOrderFromAdmin  is in file /utils/u
 So now add handleUpdateOrder to "save" button. it is possible to add 2 handlers to a single button right ??
 Also in const [cartItems, setCartItems] = useState<any[]>([]); has type err above handleUpdateOrder so fix that . line 656.
 Now continue.
+
+-------------------------------
+
+
+customerInfo.firstName
+orderNUmber
+date
+source
+status
+
+
+approval code
+charged
+customer notes  this is json field
+yardNotes   this is json field
+source
+status
+order-number
+createed-time
+invpoice sent at 
+invoice status
