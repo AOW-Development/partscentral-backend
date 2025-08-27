@@ -219,13 +219,38 @@ source
 status
 
 
-approval code
-charged
-customer notes  this is json field
-yardNotes   this is json field
+
+
 source
 status
 order-number
 createed-time
 invpoice sent at 
 invoice status
+
+------------------------------
+customerInfo.firstName with Customer Name not card holder name
+approval code
+charged
+
+
+ source            OrderSource @default(STOREFRONT)
+  status            OrderStatus @default(PENDING)
+
+  in schema with order status and order source.
+  set order no. which is being crated automtically set it to Order Number input field.
+
+  help me achive all these .
+  also "entity" in schema is not used. and "entity" is not being sent from frontend.
+
+
+
+------------------
+approval code
+charged
+payment method
+order status
+order source
+vin number 
+notes
+created time

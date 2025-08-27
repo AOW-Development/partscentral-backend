@@ -114,6 +114,8 @@ model Order {
   metadata          Json?
   customerNotes     Json?
   yardNotes         Json?
+  notes             String?
+  vinNumber         String?
   
   // Shipping
   carrierName       String?
