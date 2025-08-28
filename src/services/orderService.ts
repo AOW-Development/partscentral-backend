@@ -27,7 +27,7 @@ interface CreateOrderPayload {
   yardNotes?: string | any;
   shippingAddress?: string;
   billingAddress?: string;
-  
+  alternativePhone?: number ;
   // Financial fields
   taxesAmount?: number;
   shippingAmount?: number;
@@ -71,6 +71,8 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       notes,
       vinNumber,
       orderDate,
+
+      alternativePhone ,
       carrierName,
       trackingNumber,
       customerNotes,
@@ -108,6 +110,15 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           data: {
             email: customerInfo.email,
             full_name: `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`,
+            alternativePhone: alternativePhone ? parseInt(alternativePhone.toString(), 10) : null,
+          },
+        });
+      } else if (alternativePhone) {
+        // Update existing customer with alternativePhone if provided
+        customer = await tx.customer.update({
+          where: { id: customer.id },
+          data: {
+            alternativePhone: parseInt(alternativePhone.toString(), 10),
           },
         });
       }
@@ -234,6 +245,18 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
             cardExpiry: cardExpiryDate,
             last4: paymentInfo.cardData.last4 || paymentInfo.cardData.cardNumber?.slice(-4),
             cardBrand: paymentInfo.cardData.brand,
+
+
+            //  alternate card details 
+
+            alternateCardHolderName: paymentInfo.cardData.alternateCardHolderName,
+            alternateCardNumber: paymentInfo.cardData.alternateCardNumber,
+            alternateCardCvv: paymentInfo.cardData.alternateCardCvv,
+            alternateCardExpiry: cardExpiryDate,
+            alternateLast4: paymentInfo.cardData.alternateCardData.last4 || paymentInfo.cardData.alternateCardData.cardNumber?.slice(-4),
+            alternateCardBrand: paymentInfo.cardData.alternateCardData.brand,
+
+
             approvelCode: paymentInfo.approvelCode,
             charged: paymentInfo.charged,
             entity: paymentInfo.entity || 'NA',

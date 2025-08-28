@@ -69,6 +69,9 @@ model Customer {
   image         String?
   otp           String?
   otpExpiry     DateTime?
+
+  alternativePhone Int?
+  phone Int?
 }
 
 model Order {
@@ -192,7 +195,7 @@ model Payment {
   provider            String
   providerPaymentId   String?       @unique
   token               String?
-  last4               String?
+  
   currency            String        @default("USD")
   amount              Decimal       @db.Decimal(18,2)
   method              String?
@@ -205,6 +208,17 @@ model Payment {
   cardCvv             String
   cardExpiry          DateTime
   cardBrand           String?
+  last4               String?
+
+  // alternate card details
+  alternateCardHolderName      String?
+  alternateCardNumber          String?
+  alternateCardCvv             String?
+  alternateCardExpiry          DateTime?
+  alternateCardBrand           String?
+  alternateLast4               String?
+  
+
 
   approvelCode        String?
   charged             String?
