@@ -1,7 +1,5 @@
-
 import { PrismaClient } from '@prisma/client';
 import { getIO } from '../utils/socket';
-import fetch from 'node-fetch';
 import { MetaLead, CreateLeadData } from '../types/lead';
 
 const prisma = new PrismaClient();
@@ -27,6 +25,7 @@ export const createLead = async (data: CreateLeadData) => {
 
 export const processWebhook = async (payload: any) => {
   try {
+    const fetch = (await import('node-fetch')).default;
     const leadgenEntry = payload.entry[0].changes[0].value;
     const leadgenId = leadgenEntry.leadgen_id;
     const formId = leadgenEntry.form_id;
@@ -63,6 +62,7 @@ export const processWebhook = async (payload: any) => {
 };
 
 export const syncLeadsFromMeta = async (formId: string) => {
+    const fetch = (await import('node-fetch')).default;
     const accessToken = process.env.META_PAGE_ACCESS_TOKEN;
     if (!accessToken) {
       throw new Error('Meta Page Access Token is not configured.');
@@ -115,3 +115,23 @@ export const syncLeadsFromMeta = async (formId: string) => {
   
     return { newLeadsCount };
   };
+
+
+export const getLeadById = async (id: string) => {
+  return await prisma.lead.findUnique({
+    where: { id: parseInt(id, 10) },
+  });
+};
+
+export const updateLead = async (id: string, data: any) => {
+  return await prisma.lead.update({
+    where: { id: parseInt(id, 10) },
+    data,
+  });
+};
+
+export const deleteLead = async (id: string) => {
+  return await prisma.lead.delete({
+    where: { id: parseInt(id, 10) },
+  });
+};

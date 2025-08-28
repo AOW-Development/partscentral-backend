@@ -3,6 +3,7 @@ import { PrismaClient, OrderSource, AddressType, PaymentStatus, OrderStatus } fr
 const prisma = new PrismaClient();
 
 interface CreateOrderPayload {
+  // Required fields
   billingInfo: any;
   shippingInfo: any;
   customerInfo: any;
@@ -11,25 +12,45 @@ interface CreateOrderPayload {
   orderNumber: string;
   totalAmount: number;
   subtotal: number;
+  
+  // Order fields (matching schema)
   source?: OrderSource;
+  status?: OrderStatus;
+  year?: number;
+  saleMadeBy?: string;
   notes?: string;
+  vinNumber?: string;
+  orderDate?: Date | string;
   carrierName?: string;
   trackingNumber?: string;
-  saleMadeBy?: string;
-  yardInfo?: any;
-  customerNotes?: string;
-  yardNotes?: string;
-  // Add all other fields from the admin dashboard form
+  customerNotes?: string | any;
+  yardNotes?: string | any;
+  shippingAddress?: string;
+  billingAddress?: string;
+  
+  // Financial fields
   taxesAmount?: number;
+  shippingAmount?: number;
   handlingFee?: number;
   processingFee?: number;
   corePrice?: number;
   milesPromised?: number;
+  
+  // Address and company
   addressType?: AddressType;
   companyName?: string;
+  
+  // PO Information
   poStatus?: string;
-  poSentAt?: Date;
-  poConfirmAt?: Date;
+  poSentAt?: Date | string;
+  poConfirmAt?: Date | string;
+  
+  // Yard information
+  yardInfo?: any;
+  
+  // Metadata
+  metadata?: any;
+  idempotencyKey?: string;
 }
 
 export const createOrder = async (payload: CreateOrderPayload): Promise<any> => {
@@ -44,14 +65,20 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       subtotal,
       orderNumber,
       source,
-      // notes,
+      status,
+      year,
+      saleMadeBy,
+      notes,
+      vinNumber,
+      orderDate,
       carrierName,
       trackingNumber,
-      saleMadeBy, 
-      yardInfo,
       customerNotes,
       yardNotes,
+      shippingAddress,
+      billingAddress,
       taxesAmount,
+      shippingAmount,
       handlingFee,
       processingFee,
       corePrice,
@@ -61,7 +88,14 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       poStatus,
       poSentAt,
       poConfirmAt,
+      yardInfo,
+      metadata,
+      idempotencyKey,
     } = payload;
+
+    const mappedAddressType = typeof addressType === 'string'
+        ? AddressType[addressType.toUpperCase() as keyof typeof AddressType]
+        : addressType;
 
     return prisma.$transaction(async (tx) => {
       // 1. Find or Create Customer
@@ -81,7 +115,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       // 2. Create Address
       const newAddress = await tx.address.create({
         data: {
-          addressType: addressType || AddressType.RESIDENTIAL,
+          addressType: mappedAddressType || AddressType.RESIDENTIAL,
           shippingInfo: shippingInfo,
           billingInfo: billingInfo,
           companyName: companyName || shippingInfo.company || billingInfo.company || null,
@@ -94,27 +128,36 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           orderNumber,
           customerId: customer.id,
           source: source || OrderSource.STOREFRONT,
-          status: OrderStatus.PENDING,
+          status: status || OrderStatus.PENDING,
           subtotal: subtotal,
           totalAmount: totalAmount,
+          year: year ? parseInt(year.toString(), 10) : null,
+          saleMadeBy,
+          notes,
+          vinNumber,
+          orderDate: orderDate ? new Date(orderDate) : null,
+          carrierName,
+          trackingNumber,
+          shippingAddress,
+          billingAddress,
+          companyName: companyName || shippingInfo.company || billingInfo.company || null,
           billingSnapshot: billingInfo,
           shippingSnapshot: shippingInfo,
           addressId: newAddress.id,
-          addressType: addressType || AddressType.RESIDENTIAL,
-          // notes,
-          carrierName,
-          trackingNumber,
-          saleMadeBy,
+          addressType: mappedAddressType || AddressType.RESIDENTIAL,
           customerNotes: customerNotes ? (typeof customerNotes === 'string' ? JSON.parse(customerNotes) : customerNotes) : null,
           yardNotes: yardNotes ? (typeof yardNotes === 'string' ? JSON.parse(yardNotes) : yardNotes) : null,
-          taxesAmount,
-          handlingFee,
-          processingFee,
-          corePrice,
-          milesPromised,
+          taxesAmount: taxesAmount ? parseFloat(taxesAmount.toString()) : null,
+          shippingAmount: shippingAmount ? parseFloat(shippingAmount.toString()) : null,
+          handlingFee: handlingFee ? parseFloat(handlingFee.toString()) : null,
+          processingFee: processingFee ? parseFloat(processingFee.toString()) : null,
+          corePrice: corePrice ? parseFloat(corePrice.toString()) : null,
+          milesPromised: milesPromised ? parseFloat(milesPromised.toString()) : null,
           poStatus,
-          poSentAt,
-          poConfirmAt,
+          poSentAt: poSentAt ? new Date(poSentAt) : null,
+          poConfirmAt: poConfirmAt ? new Date(poConfirmAt) : null,
+          metadata: metadata || null,
+          idempotencyKey: idempotencyKey || null,
         },
       });
 
@@ -162,9 +205,10 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
               modelName: modelName,
               yearName: yearName,
               partName: partName,
-              specification: specification,
-              // source: source || OrderSource.STOREFRONT,
-              // status: OrderStatus.PENDING,
+              specification: item.specification || specification,
+              pictureUrl: item.pictureUrl || null,
+              pictureStatus: item.pictureStatus || null,
+              // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
             },
           });
         }
@@ -178,9 +222,9 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
         await tx.payment.create({
           data: {
             orderId: order.id,
-            provider: paymentInfo.paymentMethod,
+            provider: paymentInfo.provider || 'NA',
             amount: totalAmount,
-            currency: 'USD',
+            currency: paymentInfo.currency || 'USD',
             method: paymentInfo.paymentMethod,
             status: PaymentStatus.SUCCEEDED,
             paidAt: new Date(),
@@ -188,7 +232,11 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
             cardNumber: paymentInfo.cardData.cardNumber,
             cardCvv: paymentInfo.cardData.securityCode,
             cardExpiry: cardExpiryDate,
-            entity: 'order',
+            last4: paymentInfo.cardData.last4 || paymentInfo.cardData.cardNumber?.slice(-4),
+            cardBrand: paymentInfo.cardData.brand,
+            approvelCode: paymentInfo.approvelCode,
+            charged: paymentInfo.charged,
+            entity: paymentInfo.entity || 'NA',
           },
         });
       }

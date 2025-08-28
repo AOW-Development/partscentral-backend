@@ -5,7 +5,7 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
     try {
-        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, notes, carrierName, trackingNumber, saleMadeBy, yardInfo, taxesAmount, handlingFee, processingFee, corePrice, milesPromised, addressType, companyName, poStatus, poSentAt, poConfirmAt, } = payload;
+        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, vinNumber, orderDate, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, milesPromised, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, } = payload;
         return prisma.$transaction(async (tx) => {
             // 1. Find or Create Customer
             let customer = await tx.customer.findUnique({
@@ -34,25 +34,36 @@ const createOrder = async (payload) => {
                     orderNumber,
                     customerId: customer.id,
                     source: source || client_1.OrderSource.STOREFRONT,
-                    status: client_1.OrderStatus.PENDING,
+                    status: status || client_1.OrderStatus.PENDING,
                     subtotal: subtotal,
                     totalAmount: totalAmount,
+                    year: year ? parseInt(year.toString(), 10) : null,
+                    saleMadeBy,
+                    notes,
+                    vinNumber,
+                    orderDate: orderDate ? new Date(orderDate) : null,
+                    carrierName,
+                    trackingNumber,
+                    shippingAddress,
+                    billingAddress,
+                    companyName: companyName || shippingInfo.company || billingInfo.company || null,
                     billingSnapshot: billingInfo,
                     shippingSnapshot: shippingInfo,
                     addressId: newAddress.id,
                     addressType: addressType || client_1.AddressType.RESIDENTIAL,
-                    // notes,
-                    carrierName,
-                    trackingNumber,
-                    saleMadeBy,
-                    taxesAmount,
-                    handlingFee,
-                    processingFee,
-                    corePrice,
-                    milesPromised,
+                    customerNotes: customerNotes ? (typeof customerNotes === 'string' ? JSON.parse(customerNotes) : customerNotes) : null,
+                    yardNotes: yardNotes ? (typeof yardNotes === 'string' ? JSON.parse(yardNotes) : yardNotes) : null,
+                    taxesAmount: taxesAmount ? parseFloat(taxesAmount.toString()) : null,
+                    shippingAmount: shippingAmount ? parseFloat(shippingAmount.toString()) : null,
+                    handlingFee: handlingFee ? parseFloat(handlingFee.toString()) : null,
+                    processingFee: processingFee ? parseFloat(processingFee.toString()) : null,
+                    corePrice: corePrice ? parseFloat(corePrice.toString()) : null,
+                    milesPromised: milesPromised ? parseFloat(milesPromised.toString()) : null,
                     poStatus,
-                    poSentAt,
-                    poConfirmAt,
+                    poSentAt: poSentAt ? new Date(poSentAt) : null,
+                    poConfirmAt: poConfirmAt ? new Date(poConfirmAt) : null,
+                    metadata: metadata || null,
+                    idempotencyKey: idempotencyKey || null,
                 },
             });
             // 4. Create Order Items
@@ -96,9 +107,10 @@ const createOrder = async (payload) => {
                             modelName: modelName,
                             yearName: yearName,
                             partName: partName,
-                            specification: specification,
-                            // source: source || OrderSource.STOREFRONT,
-                            // status: OrderStatus.PENDING,
+                            specification: item.specification || specification,
+                            pictureUrl: item.pictureUrl || null,
+                            pictureStatus: item.pictureStatus || null,
+                            // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
                         },
                     });
                 }
@@ -110,9 +122,9 @@ const createOrder = async (payload) => {
                 await tx.payment.create({
                     data: {
                         orderId: order.id,
-                        provider: paymentInfo.paymentMethod,
+                        provider: paymentInfo.provider || 'NA',
                         amount: totalAmount,
-                        currency: 'USD',
+                        currency: paymentInfo.currency || 'USD',
                         method: paymentInfo.paymentMethod,
                         status: client_1.PaymentStatus.SUCCEEDED,
                         paidAt: new Date(),
@@ -120,7 +132,11 @@ const createOrder = async (payload) => {
                         cardNumber: paymentInfo.cardData.cardNumber,
                         cardCvv: paymentInfo.cardData.securityCode,
                         cardExpiry: cardExpiryDate,
-                        entity: 'order',
+                        last4: paymentInfo.cardData.last4 || paymentInfo.cardData.cardNumber?.slice(-4),
+                        cardBrand: paymentInfo.cardData.brand,
+                        approvelCode: paymentInfo.approvelCode,
+                        charged: paymentInfo.charged,
+                        entity: paymentInfo.entity || 'NA',
                     },
                 });
             }

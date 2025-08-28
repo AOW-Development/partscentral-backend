@@ -77,8 +77,8 @@ model Order {
   year              Int?
   saleMadeBy        String?
   currency          String      @default("USD")
-  source            OrderSource @default(STOREFRONT)
-  status            OrderStatus @default(PENDING)
+  source            String? 
+  status            String? 
   
   // Totals
   subtotal          Decimal     @db.Decimal(18,2)
@@ -116,6 +116,7 @@ model Order {
   yardNotes         Json?
   notes             String?
   vinNumber         String?
+  orderDate         DateTime?
   
   // Shipping
   carrierName       String?
@@ -157,7 +158,7 @@ model OrderItem {
   
   // Media
   pictureStatus   String?
-  pictureUrl      String?
+  pictureUrl      String? @db.LongText
   
   // Product Reference
   productVariant  ProductVariant_1 @relation(fields: [productVariantId], references: [id])

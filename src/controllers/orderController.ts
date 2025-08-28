@@ -32,26 +32,18 @@ export const getOrderById = async (req: Request, res: Response) => {
 
 export const createOrder = async (req: Request, res: Response) => {
   try {
-    const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber } = req.body;
-
-    // Validate incoming data (basic validation, more robust validation should be added)
+    // Extract all fields from request body (wildcard approach for future extensibility)
+    const orderPayload = req.body;
+    
+    // Validate only the absolutely required fields
+    const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber } = orderPayload;
+    
     if (!billingInfo || !shippingInfo || !customerInfo || !cartItems || !paymentInfo || totalAmount === undefined || subtotal === undefined || !orderNumber) {
       return res.status(400).json({ error: 'Missing required order information.' });
     }
   
-
-  const newOrder = await createOrderService({
-    billingInfo,
-    shippingInfo,
-    customerInfo,
-    cartItems,
-    paymentInfo,
-    totalAmount,
-    subtotal,
-    orderNumber,
-    customerNotes: req.body.customerNotes,  
-    yardNotes: req.body.yardNotes, 
-  });
+    // Pass the entire payload to the service (allows for future field additions without controller changes)
+    const newOrder = await createOrderService(orderPayload);
 
   // Emit socket.io event
   const socketEventPayload = {

@@ -72,23 +72,90 @@ export const updateOrder = async (orderId: string, data: any): Promise<Order> =>
       updateData.shippingSnapshot = shippingInfo;
     }
     if (cartItems) {
-      await tx.orderItem.deleteMany({
-        where: {
-          orderId: orderId,
-        },
+      // Get existing order items
+      const existingItems = await tx.orderItem.findMany({
+        where: { orderId: orderId },
       });
-      updateData.items = {
-        create: cartItems.map((item: any) => ({
-          sku: item.sku,
-          quantity: item.quantity,
-          price: item.price,
-          name: item.name,
-          warranty: item.warranty,
-          milesPromised: item.milesPromised,
-          specification: item.specification,
-          productVariantId: item.productVariantId,
-        })),
-      };
+
+      // Update existing items or create new ones
+      for (const item of cartItems) {
+        const existingItem = existingItems.find(ei => ei.sku === item.sku);
+        
+        if (existingItem) {
+          // Update existing item with new data
+          await tx.orderItem.update({
+            where: { id: existingItem.id },
+            data: {
+              quantity: item.quantity,
+              unitPrice: item.price,
+              lineTotal: item.price * item.quantity,
+              specification: item.specification || existingItem.specification,
+              pictureUrl: item.pictureUrl || existingItem.pictureUrl,
+              pictureStatus: item.pictureStatus || existingItem.pictureStatus,
+              // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : existingItem.metadata,
+            },
+          });
+        } else {
+          // Create new item only if it doesn't exist
+          const productVariant = await tx.productVariant_1.findUnique({
+            where: { sku: item.sku },
+            include: {
+              product: {
+                include: {
+                  modelYear: {
+                    include: {
+                      model: { include: { make: true } },
+                      year: true,
+                    },
+                  },
+                  partType: true,
+                },
+              },
+            },
+          });
+
+          if (!productVariant || !productVariant.product) {
+            throw new Error(`Product variant with SKU ${item.sku} not found.`);
+          }
+
+          const product = productVariant.product;
+          const makeName = product.modelYear.model.make.name;
+          const modelName = product.modelYear.model.name;
+          const yearName = product.modelYear.year.value;
+          const partName = product.partType.name;
+          const specification = product.description || '';
+
+          await tx.orderItem.create({
+            data: {
+              orderId: orderId,
+              productVariantId: productVariant.id,
+              product_id: product.id,
+              sku: item.sku,
+              quantity: item.quantity,
+              unitPrice: item.price,
+              lineTotal: item.price * item.quantity,
+              makeName: makeName,
+              modelName: modelName,
+              yearName: yearName,
+              partName: partName,
+              specification: item.specification || specification,
+              pictureUrl: item.pictureUrl || null,
+              pictureStatus: item.pictureStatus || null,
+              metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : undefined,
+            },
+          });
+        }
+      }
+
+      // Remove items that are no longer in the cart
+      const cartSkus = cartItems.map(item => item.sku);
+      const itemsToRemove = existingItems.filter(ei => !cartSkus.includes(ei.sku));
+      
+      for (const itemToRemove of itemsToRemove) {
+        await tx.orderItem.delete({
+          where: { id: itemToRemove.id },
+        });
+      }
     }
 
     const updatedOrder = await tx.order.update({
