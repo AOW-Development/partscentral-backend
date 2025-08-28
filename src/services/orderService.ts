@@ -14,8 +14,8 @@ interface CreateOrderPayload {
   subtotal: number;
   
   // Order fields (matching schema)
-  source?: OrderSource;
-  status?: OrderStatus;
+  source?: string;
+  status?: string;
   year?: number;
   saleMadeBy?: string;
   notes?: string;
@@ -127,8 +127,8 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
         data: {
           orderNumber,
           customerId: customer.id,
-          source: source || OrderSource.STOREFRONT,
-          status: status || OrderStatus.PENDING,
+          source: source ,
+          status: status,
           subtotal: subtotal,
           totalAmount: totalAmount,
           year: year ? parseInt(year.toString(), 10) : null,
@@ -252,10 +252,10 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       }
 
       // Update order status to PAID if payment was made
-      const finalStatus = paymentInfo ? OrderStatus.PAID : OrderStatus.PENDING;
+      // const finalStatus = paymentInfo ? OrderStatus.PAID : OrderStatus.PENDING;
       const updatedOrder = await tx.order.update({
         where: { id: order.id },
-        data: { status: finalStatus },
+        data: { status: order.status },
         include: {
           customer: true,
           items: true,

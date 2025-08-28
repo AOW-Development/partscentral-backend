@@ -148,7 +148,7 @@ export const updateOrder = async (orderId: string, data: any): Promise<Order> =>
       }
 
       // Remove items that are no longer in the cart
-      const cartSkus = cartItems.map(item => item.sku);
+      const cartSkus = cartItems.map((item: { sku: any; }) => item.sku);
       const itemsToRemove = existingItems.filter(ei => !cartSkus.includes(ei.sku));
       
       for (const itemToRemove of itemsToRemove) {

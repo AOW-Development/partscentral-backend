@@ -6,6 +6,9 @@ const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
     try {
         const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, vinNumber, orderDate, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, milesPromised, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, } = payload;
+        const mappedAddressType = typeof addressType === 'string'
+            ? client_1.AddressType[addressType.toUpperCase()]
+            : addressType;
         return prisma.$transaction(async (tx) => {
             // 1. Find or Create Customer
             let customer = await tx.customer.findUnique({
@@ -22,7 +25,7 @@ const createOrder = async (payload) => {
             // 2. Create Address
             const newAddress = await tx.address.create({
                 data: {
-                    addressType: addressType || client_1.AddressType.RESIDENTIAL,
+                    addressType: mappedAddressType || client_1.AddressType.RESIDENTIAL,
                     shippingInfo: shippingInfo,
                     billingInfo: billingInfo,
                     companyName: companyName || shippingInfo.company || billingInfo.company || null,
@@ -50,7 +53,7 @@ const createOrder = async (payload) => {
                     billingSnapshot: billingInfo,
                     shippingSnapshot: shippingInfo,
                     addressId: newAddress.id,
-                    addressType: addressType || client_1.AddressType.RESIDENTIAL,
+                    addressType: mappedAddressType || client_1.AddressType.RESIDENTIAL,
                     customerNotes: customerNotes ? (typeof customerNotes === 'string' ? JSON.parse(customerNotes) : customerNotes) : null,
                     yardNotes: yardNotes ? (typeof yardNotes === 'string' ? JSON.parse(yardNotes) : yardNotes) : null,
                     taxesAmount: taxesAmount ? parseFloat(taxesAmount.toString()) : null,

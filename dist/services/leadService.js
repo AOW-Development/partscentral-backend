@@ -1,12 +1,41 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.syncLeadsFromMeta = exports.processWebhook = exports.createLead = exports.getLeads = void 0;
+exports.deleteLead = exports.updateLead = exports.getLeadById = exports.syncLeadsFromMeta = exports.processWebhook = exports.createLead = exports.getLeads = void 0;
 const client_1 = require("@prisma/client");
 const socket_1 = require("../utils/socket");
-const node_fetch_1 = __importDefault(require("node-fetch"));
 const prisma = new client_1.PrismaClient();
 const getLeads = async () => {
     return await prisma.lead.findMany({
@@ -29,6 +58,7 @@ const createLead = async (data) => {
 exports.createLead = createLead;
 const processWebhook = async (payload) => {
     try {
+        const fetch = (await Promise.resolve().then(() => __importStar(require('node-fetch')))).default;
         const leadgenEntry = payload.entry[0].changes[0].value;
         const leadgenId = leadgenEntry.leadgen_id;
         const formId = leadgenEntry.form_id;
@@ -36,7 +66,7 @@ const processWebhook = async (payload) => {
         if (!accessToken) {
             throw new Error('Meta Page Access Token is not configured.');
         }
-        const response = await (0, node_fetch_1.default)(`https://graph.facebook.com/v19.0/${leadgenId}?access_token=${accessToken}`);
+        const response = await fetch(`https://graph.facebook.com/v19.0/${leadgenId}?access_token=${accessToken}`);
         if (!response.ok) {
             throw new Error(`Failed to fetch lead data from Meta: ${response.statusText}`);
         }
@@ -60,6 +90,7 @@ const processWebhook = async (payload) => {
 };
 exports.processWebhook = processWebhook;
 const syncLeadsFromMeta = async (formId) => {
+    const fetch = (await Promise.resolve().then(() => __importStar(require('node-fetch')))).default;
     const accessToken = process.env.META_PAGE_ACCESS_TOKEN;
     if (!accessToken) {
         throw new Error('Meta Page Access Token is not configured.');
@@ -68,7 +99,7 @@ const syncLeadsFromMeta = async (formId) => {
     // Request field_data and created_time in the paginated request
     let url = `https://graph.facebook.com/v19.0/${formId}/leads?access_token=${accessToken}&fields=id,field_data,created_time&limit=100`;
     while (url) {
-        const response = await (0, node_fetch_1.default)(url);
+        const response = await fetch(url);
         const jsonResponse = await response.json();
         if (!response.ok) {
             throw new Error(`Failed to fetch leads from Meta: ${jsonResponse.error?.message || response.statusText}`);
@@ -97,3 +128,22 @@ const syncLeadsFromMeta = async (formId) => {
     return { newLeadsCount };
 };
 exports.syncLeadsFromMeta = syncLeadsFromMeta;
+const getLeadById = async (id) => {
+    return await prisma.lead.findUnique({
+        where: { id: parseInt(id, 10) },
+    });
+};
+exports.getLeadById = getLeadById;
+const updateLead = async (id, data) => {
+    return await prisma.lead.update({
+        where: { id: parseInt(id, 10) },
+        data,
+    });
+};
+exports.updateLead = updateLead;
+const deleteLead = async (id) => {
+    return await prisma.lead.delete({
+        where: { id: parseInt(id, 10) },
+    });
+};
+exports.deleteLead = deleteLead;

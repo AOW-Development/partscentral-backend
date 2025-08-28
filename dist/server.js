@@ -33,7 +33,8 @@ app.use((0, cors_1.default)({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
     allowedHeaders: ['Content-Type', 'Authorization'] // Allowed headers
 }));
-app.use(express_1.default.json());
+app.use(express_1.default.json({ limit: '50mb' }));
+app.use(express_1.default.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/products', productRoutes_1.default);
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/orders', order_routes_1.default);
