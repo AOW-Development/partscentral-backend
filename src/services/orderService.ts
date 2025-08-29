@@ -12,6 +12,11 @@ interface CreateOrderPayload {
   orderNumber: string;
   totalAmount: number;
   subtotal: number;
+
+  // Invoice fields
+  invoiceSentAt?: Date | string;
+  invoiceStatus?: string;
+  invoiceConfirmedAt?: Date | string;
   
   // Order fields (matching schema)
   source?: string;
@@ -85,6 +90,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       processingFee,
       corePrice,
       milesPromised,
+      
       addressType,
       companyName,
       poStatus,
@@ -93,6 +99,9 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       yardInfo,
       metadata,
       idempotencyKey,
+      invoiceSentAt,
+      invoiceStatus,
+      invoiceConfirmedAt,
     } = payload;
 
     const mappedAddressType = typeof addressType === 'string'
@@ -110,15 +119,15 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           data: {
             email: customerInfo.email,
             full_name: `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`,
-            alternativePhone: alternativePhone ? parseInt(alternativePhone.toString(), 10) : null,
+            alternativePhone: customerInfo.alternativePhone ? parseInt(customerInfo.alternativePhone.toString(), 10) : null,
           },
         });
-      } else if (alternativePhone) {
+      } else if (customerInfo.alternativePhone) {
         // Update existing customer with alternativePhone if provided
         customer = await tx.customer.update({
           where: { id: customer.id },
           data: {
-            alternativePhone: parseInt(alternativePhone.toString(), 10),
+            alternativePhone: parseInt(customerInfo.alternativePhone.toString(), 10),
           },
         });
       }
@@ -169,6 +178,11 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           poConfirmAt: poConfirmAt ? new Date(poConfirmAt) : null,
           metadata: metadata || null,
           idempotencyKey: idempotencyKey || null,
+
+          invoiceSentAt: invoiceSentAt ? new Date(invoiceSentAt) : null,
+          invoiceStatus: invoiceStatus || null,
+          invoiceConfirmedAt: invoiceConfirmedAt ? new Date(invoiceConfirmedAt) : null,
+
         },
       });
 
@@ -249,12 +263,12 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
 
             //  alternate card details 
 
-            alternateCardHolderName: paymentInfo.cardData.alternateCardHolderName,
-            alternateCardNumber: paymentInfo.cardData.alternateCardNumber,
-            alternateCardCvv: paymentInfo.cardData.alternateCardCvv,
-            alternateCardExpiry: cardExpiryDate,
-            alternateLast4: paymentInfo.cardData.alternateCardData.last4 || paymentInfo.cardData.alternateCardData.cardNumber?.slice(-4),
-            alternateCardBrand: paymentInfo.cardData.alternateCardData.brand,
+            alternateCardHolderName: paymentInfo.alternateCardData?.cardholderName,
+            alternateCardNumber: paymentInfo.alternateCardData?.cardNumber,
+            alternateCardCvv: paymentInfo.alternateCardData?.securityCode,
+            alternateCardExpiry: paymentInfo.alternateCardData?.expirationDate ? new Date(parseInt(`20${paymentInfo.alternateCardData.expirationDate.split('/')[1]}`), parseInt(paymentInfo.alternateCardData.expirationDate.split('/')[0]) - 1, 1) : null,
+            alternateLast4: paymentInfo.alternateCardData?.last4 || paymentInfo.alternateCardData?.cardNumber?.slice(-4),
+            alternateCardBrand: paymentInfo.alternateCardData?.brand,
 
 
             approvelCode: paymentInfo.approvelCode,

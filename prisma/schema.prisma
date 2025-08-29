@@ -132,8 +132,8 @@ model Order {
 
 
   // invoice Information
-  invoiceSentAt     Int?
-  invoiceConfirmAt  Int?
+  invoiceSentAt     DateTime?
+  invoiceConfirmedAt DateTime?
   invoiceStatus     String?
   
 
