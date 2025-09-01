@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createOrder as createOrderService, getOrders as getOrdersService, getOrderById as getOrderByIdService } from '../services/orderService';
+import { createOrder as createOrderService, getOrders as getOrdersService, getOrderById as getOrderByIdService, deleteOrder as deleteOrderService } from '../services/orderService';
 import { updateOrder as updateOrderService } from '../services/updateOrderService';
 import { getIO } from '../utils/socket';
 
@@ -81,6 +81,17 @@ export const updateOrder = async (req: Request, res: Response) => {
     res.status(200).json(updatedOrder);
   } catch (error: any) {
     console.error(`Error updating order ${req.params.id}:`, error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+export const deleteOrder = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await deleteOrderService(id);
+    res.status(200).json({ message: 'Order deleted successfully' });
+  } catch (error: any) {
+    console.error(`Error deleting order ${req.params.id}:`, error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };

@@ -343,3 +343,40 @@ export const getOrderById = async (orderId: string): Promise<any> => {
     throw err;
   }
 };
+
+export const deleteOrder = async (orderId: string): Promise<void> => {
+  try {
+    // Use a transaction to delete all related records first, then the order
+    await prisma.$transaction(async (tx) => {
+      // Delete related records first (in order of dependencies)
+      await tx.orderItem.deleteMany({
+        where: { orderId },
+      });
+      
+      await tx.orderEvent.deleteMany({
+        where: { orderId },
+      });
+      
+      await tx.payment.deleteMany({
+        where: { orderId },
+      });
+      
+      await tx.yardHistory.deleteMany({
+        where: { orderId },
+      });
+      
+      // Delete YardInfo (one-to-one relationship)
+      await tx.yardInfo.deleteMany({
+        where: { orderId },
+      });
+      
+      // Finally, delete the order itself
+      await tx.order.delete({
+        where: { id: orderId },
+      });
+    });
+  } catch (err) {
+    console.error(`Error deleting order ${orderId}:`, err);
+    throw err;
+  }
+};
