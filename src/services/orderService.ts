@@ -89,7 +89,6 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       handlingFee,
       processingFee,
       corePrice,
-      milesPromised,
       
       addressType,
       companyName,
@@ -172,7 +171,6 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           handlingFee: handlingFee ? parseFloat(handlingFee.toString()) : null,
           processingFee: processingFee ? parseFloat(processingFee.toString()) : null,
           corePrice: corePrice ? parseFloat(corePrice.toString()) : null,
-          milesPromised: milesPromised ? parseFloat(milesPromised.toString()) : null,
           poStatus,
           poSentAt: poSentAt ? new Date(poSentAt) : null,
           poConfirmAt: poConfirmAt ? new Date(poConfirmAt) : null,
@@ -182,7 +180,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           invoiceSentAt: invoiceSentAt ? new Date(invoiceSentAt) : null,
           invoiceStatus: invoiceStatus || null,
           invoiceConfirmedAt: invoiceConfirmedAt ? new Date(invoiceConfirmedAt) : null,
-
+          // warranty: warranty || "", // this takes enum in schema
         },
       });
 
@@ -231,6 +229,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
               yearName: yearName,
               partName: partName,
               specification: item.specification || specification,
+              milesPromised: item.milesPromised ? parseFloat(item.milesPromised.toString()) : null,
               pictureUrl: item.pictureUrl || null,
               pictureStatus: item.pictureStatus || null,
               // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
