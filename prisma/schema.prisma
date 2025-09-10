@@ -345,6 +345,8 @@ model YardHistory {
   
   // Timestamps
   changedAt       DateTime  @default(now())
+  shipping        String?
+  yardCost        Json?
   reason          String?
   @@index([orderId])
 }
