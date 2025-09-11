@@ -65,6 +65,14 @@ export const updateOrder = async (orderId: string, data: any): Promise<Order> =>
     const { customerId, addressId, ...restOfOrderData } = orderData;
     const updateData: any = { ...restOfOrderData };
 
+    // Explicitly handle date conversions for invoice fields
+    if (updateData.invoiceSentAt) {
+      updateData.invoiceSentAt = new Date(updateData.invoiceSentAt);
+    }
+    if (updateData.invoiceConfirmedAt) {
+      updateData.invoiceConfirmedAt = new Date(updateData.invoiceConfirmedAt);
+    }
+
     if (billingInfo) {
       updateData.billingSnapshot = billingInfo;
     }

@@ -1,6 +1,7 @@
-import { PrismaClient, OrderSource, AddressType, PaymentStatus, OrderStatus } from '@prisma/client';
+import { PrismaClient, OrderSource, AddressType, PaymentStatus, OrderStatus ,Warranty} from '@prisma/client';
 
 const prisma = new PrismaClient();
+
 
 interface CreateOrderPayload {
   // Required fields
@@ -53,6 +54,9 @@ interface CreateOrderPayload {
   // Yard information
   yardInfo?: any;
   
+  // Warranty
+  warranty?: string;
+  
   // Metadata
   metadata?: any;
   idempotencyKey?: string;
@@ -101,11 +105,29 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       invoiceSentAt,
       invoiceStatus,
       invoiceConfirmedAt,
+      warranty,
     } = payload;
 
     const mappedAddressType = typeof addressType === 'string'
         ? AddressType[addressType.toUpperCase() as keyof typeof AddressType]
         : addressType;
+        const warrantyMap: { [key: string]: Warranty } = {
+          '30 Days': Warranty.WARRANTY_30_DAYS,
+          '60 Days': Warranty.WARRANTY_60_DAYS,
+          '90 Days': Warranty.WARRANTY_90_DAYS,
+          '6 Months': Warranty.WARRANTY_6_MONTHS,
+          '1 Year': Warranty.WARRANTY_1_YEAR,
+        };
+
+        let validWarranty: Warranty;
+        if (warranty && warrantyMap[warranty]) {
+          validWarranty = warrantyMap[warranty];
+        } else if (warranty && Object.values(Warranty).includes(warranty as Warranty)) {
+          validWarranty = warranty as Warranty;
+        } else {
+          validWarranty = Warranty.WARRANTY_30_DAYS;
+        }
+
 
     return prisma.$transaction(async (tx) => {
       // 1. Find or Create Customer
@@ -117,7 +139,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
         customer = await tx.customer.create({
           data: {
             email: customerInfo.email,
-            full_name: `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`,
+            full_name: customerInfo.firstName,
             alternativePhone: customerInfo.alternativePhone ? parseInt(customerInfo.alternativePhone.toString(), 10) : null,
           },
         });
@@ -180,7 +202,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           invoiceSentAt: invoiceSentAt ? new Date(invoiceSentAt) : null,
           invoiceStatus: invoiceStatus || null,
           invoiceConfirmedAt: invoiceConfirmedAt ? new Date(invoiceConfirmedAt) : null,
-          // warranty: warranty || "", // this takes enum in schema
+          warranty: validWarranty,
         },
       });
 
