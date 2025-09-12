@@ -1,0 +1,139 @@
+there is issue with updating order check err @database/sent-payload-updateOrder.txt and check sent payload structure . if you dont   │
+│    know then see create order payload sending + orderserivice ,see how it is sending here it must be exaclty same here as well          │
+│    everything same here @database/dist/services/orderService.js + @partscentral-dashboard/utils/orderApi.ts . see updateorder here      │
+│    @database/src/services/updateOrderService.ts + @partscentral-dashboard/utils/updateOrderApi.ts .
+
+Error updating order cmfgrlm190009vd68xd1oe1u8: PrismaClientValidationError: 
+Invalid `tx.order.update()` invocation in
+C:\Users\Intern\Desktop\partsCentral\database\src\services\updateOrderService.ts:236:41
+
+  233   }
+  234 }
+  235
+→ 236 const updatedOrder = await tx.order.update({
+        where: {
+          id: "cmfgrlm190009vd68xd1oe1u8"
+        },
+        data: {
+          totalAmount: 0,
+          subtotal: 0,
+          source: "",
+          status: "NA",
+          warranty: "WARRANTY_90_DAYS",
+          taxesAmount: 0,
+          handlingFee: 0,
+          processingFee: 0,
+          corePrice: 0,
+          shippingAddress: "sdsadsdsd 1",
+          billingAddress: "asdsad asd 2",
+          notes: "",
+          vinNumber: "",
+          orderDate: null,
+          carrierName: "sdsd",
+          trackingNumber: "asdasd1211",
+          invoiceStatus: "NOT_AVAILABLE",
+          invoiceSentAt: null,
+          invoiceConfirmedAt: null,
+          customerNotes: [
+            {
+              id: 1757678138160,
+              timestamp: "2025-09-12T11:39:30.462Z",
+              message: "Order Received – Customer placed the order online.",
+              actor: "Added By System"
+            }
+          ],
+          yardNotes: [
+            {
+              id: 1757677097583,
+              actor: "By Agent",
+              message: "sadsd",
+              timestamp: "2025-09-12T11:35:13.351Z"
+            },
+            {
+              id: 1757677596133,
+              actor: "By Agent",
+              message: "asdsad",
+              timestamp: "2025-09-12T11:35:09.415Z"
+            }
+          ],
+          paymentInfo: {
+          ~~~~~~~~~~~
+            paymentMethod: "",
+            status: "PENDING",
+            amount: 0,
+            currency: "USD",
+            provider: "STRIPE",
+            entity: null,
+            cardData: null,
+            alternateCardData: null
+          },
+          billingSnapshot: {
+            firstName: "Unknown",
+            lastName: "",
+            address: "asdsad asd 2",
+            city: "Unknown",
+            state: "CA",
+            postalCode: "00000",
+            country: "US",
+            phone: "000-000-0000",
+            email: "no-email@example.com",
+            company: null,
+            addressType: "RESIDENTIAL"
+          },
+          shippingSnapshot: {
+            firstName: "Unknown",
+            lastName: "",
+            address: "sdsadsdsd 1",
+            city: "Unknown",
+            state: "CA",
+            postalCode: "00000",
+            country: "US",
+            phone: "000-000-0000",
+            email: "no-email@example.com",
+            company: null,
+            addressType: "RESIDENTIAL"
+          },
+      ?   id?: String | StringFieldUpdateOperationsInput,
+      ?   orderNumber?: String | StringFieldUpdateOperationsInput,
+      ?   year?: Int | NullableIntFieldUpdateOperationsInput | Null,
+      ?   saleMadeBy?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   currency?: String | StringFieldUpdateOperationsInput,
+      ?   shippingAmount?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+      ?   addressType?: AddressType | EnumAddressTypeFieldUpdateOperationsInput,
+      ?   companyName?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   idempotencyKey?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   metadata?: NullableJsonNullValueInput | Json,
+      ?   poStatus?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   poSentAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+      ?   poConfirmAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+      ?   createdAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   updatedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   customer?: CustomerUpdateOneRequiredWithoutOrdersNestedInput,
+      ?   items?: OrderItemUpdateManyWithoutOrderNestedInput,
+      ?   events?: OrderEventUpdateManyWithoutOrderNestedInput,
+      ?   payments?: PaymentUpdateManyWithoutOrderNestedInput,
+      ?   yardInfo?: YardInfoUpdateOneWithoutOrderNestedInput,
+      ?   yardHistory?: YardHistoryUpdateManyWithoutOrderNestedInput,
+      ?   address?: AddressUpdateOneWithoutOrdersNestedInput
+        },
+        include: {
+          customer: true,
+          items: true,
+          payments: true,
+          yardInfo: true,
+          yardHistory: true,
+          address: true
+        }
+      })
+
+Unknown argument `paymentInfo`. Available options are marked with ?.
+    at throwValidationException (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\core\errorRendering\throwValidationException.ts:45:9)
+    at ri.handleRequestError (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\RequestHandler.ts:202:7)
+    at ri.handleAndLogRequestError (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\RequestHandler.ts:174:12)
+    at ri.request (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\RequestHandler.ts:143:12)
+    at async l (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:862:24)
+    at async C:\Users\Intern\Desktop\partsCentral\database\src\services\updateOrderService.ts:236:26
+    at async Proxy._transactionWithCallback (C:\Users\Intern\Desktop\partsCentral\database\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:732:18)    
+    at async updateOrder (C:\Users\Intern\Desktop\partsCentral\database\src\controllers\orderController.ts:79:26) {
+  clientVersion: '6.12.0'
+}

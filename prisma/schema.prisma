@@ -322,6 +322,7 @@ model YardInfo {
   yardOwnShippingInfo  Json?
   yardShippingType     String?
   yardShippingCost     Decimal?  @db.Decimal(18,2)
+  attnName             String?
   
   // Timestamps
   updatedAt            DateTime  @updatedAt
@@ -342,6 +343,7 @@ model YardHistory {
   yardPrice       Decimal?  @db.Decimal(18,2)
   yardWarranty    Warranty?
   yardMiles       Decimal?  @db.Decimal(18,2)
+  attnName        String?
   
   // Timestamps
   changedAt       DateTime  @default(now())

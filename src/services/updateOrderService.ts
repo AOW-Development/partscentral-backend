@@ -12,7 +12,8 @@ export const updateOrder = async (orderId: string, data: any): Promise<Order> =>
       throw new Error(`Order with ID ${orderId} not found.`);
     }
 
-    const { yardInfo, billingInfo, shippingInfo, customerInfo, cartItems, ...orderData } = data;
+    // Extract paymentInfo first to exclude it from order update
+    const { yardInfo, billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, ...orderData } = data;
 
     if (yardInfo) {
       const currentYardInfo = await tx.yardInfo.findUnique({
@@ -164,6 +165,70 @@ export const updateOrder = async (orderId: string, data: any): Promise<Order> =>
       for (const itemToRemove of itemsToRemove) {
         await tx.orderItem.delete({
           where: { id: itemToRemove.id },
+        });
+      }
+    }
+
+    // Handle payment update if paymentInfo is present
+    if (paymentInfo && paymentInfo.cardData) {
+      const [expMonth, expYear] = paymentInfo.cardData.expirationDate.split('/');
+      const cardExpiryDate = new Date(parseInt(`20${expYear}`), parseInt(expMonth) - 1, 1);
+
+      // Find existing payment
+      const existingPayment = await tx.payment.findFirst({ where: { orderId } });
+      if (existingPayment) {
+        await tx.payment.update({
+          where: { id: existingPayment.id },
+          data: {
+            provider: paymentInfo.provider || 'NA',
+            amount: updateData.totalAmount,
+            currency: paymentInfo.currency || 'USD',
+            method: paymentInfo.paymentMethod,
+            status: paymentInfo.status || 'PENDING',
+            paidAt: new Date(),
+            cardHolderName: paymentInfo.cardData.cardholderName,
+            cardNumber: paymentInfo.cardData.cardNumber,
+            cardCvv: paymentInfo.cardData.securityCode,
+            cardExpiry: cardExpiryDate,
+            last4: paymentInfo.cardData.last4 || paymentInfo.cardData.cardNumber?.slice(-4),
+            cardBrand: paymentInfo.cardData.brand,
+            alternateCardHolderName: paymentInfo.alternateCardData?.cardholderName,
+            alternateCardNumber: paymentInfo.alternateCardData?.cardNumber,
+            alternateCardCvv: paymentInfo.alternateCardData?.securityCode,
+            alternateCardExpiry: paymentInfo.alternateCardData?.expirationDate ? new Date(parseInt(`20${paymentInfo.alternateCardData.expirationDate.split('/')[1]}`), parseInt(paymentInfo.alternateCardData.expirationDate.split('/')[0]) - 1, 1) : null,
+            alternateLast4: paymentInfo.alternateCardData?.last4 || paymentInfo.alternateCardData?.cardNumber?.slice(-4),
+            alternateCardBrand: paymentInfo.alternateCardData?.brand,
+            approvelCode: paymentInfo.approvelCode,
+            charged: paymentInfo.charged,
+            entity: paymentInfo.entity || 'NA',
+          }
+        });
+      } else {
+        await tx.payment.create({
+          data: {
+            orderId: orderId,
+            provider: paymentInfo.provider || 'NA',
+            amount: updateData.totalAmount,
+            currency: paymentInfo.currency || 'USD',
+            method: paymentInfo.paymentMethod,
+            status: paymentInfo.status || 'PENDING',
+            paidAt: new Date(),
+            cardHolderName: paymentInfo.cardData.cardholderName,
+            cardNumber: paymentInfo.cardData.cardNumber,
+            cardCvv: paymentInfo.cardData.securityCode,
+            cardExpiry: cardExpiryDate,
+            last4: paymentInfo.cardData.last4 || paymentInfo.cardData.cardNumber?.slice(-4),
+            cardBrand: paymentInfo.cardData.brand,
+            alternateCardHolderName: paymentInfo.alternateCardData?.cardholderName,
+            alternateCardNumber: paymentInfo.alternateCardData?.cardNumber,
+            alternateCardCvv: paymentInfo.alternateCardData?.securityCode,
+            alternateCardExpiry: paymentInfo.alternateCardData?.expirationDate ? new Date(parseInt(`20${paymentInfo.alternateCardData.expirationDate.split('/')[1]}`), parseInt(paymentInfo.alternateCardData.expirationDate.split('/')[0]) - 1, 1) : null,
+            alternateLast4: paymentInfo.alternateCardData?.last4 || paymentInfo.alternateCardData?.cardNumber?.slice(-4),
+            alternateCardBrand: paymentInfo.alternateCardData?.brand,
+            approvelCode: paymentInfo.approvelCode,
+            charged: paymentInfo.charged,
+            entity: paymentInfo.entity || 'NA',
+          }
         });
       }
     }

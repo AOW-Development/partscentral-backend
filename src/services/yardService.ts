@@ -34,6 +34,7 @@ export const moveYardInfoToHistory = async (orderId: string, reason: string) => 
       shipping: yardInfo.yardShippingType,
       yardCost: yardCost,
       reason: reason,
+      attnName: yardInfo.attnName,
     };
 
     console.log('Creating yard history with data:', historyData);
