@@ -350,6 +350,7 @@ model YardHistory {
   shipping        String?
   yardCost        Json?
   reason          String?
+  yardCharge      String?
   @@index([orderId])
 }
 

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateOrder = exports.createOrder = exports.getOrderById = exports.getOrders = void 0;
+exports.deleteOrder = exports.updateOrder = exports.createOrder = exports.getOrderById = exports.getOrders = void 0;
 const orderService_1 = require("../services/orderService");
 const updateOrderService_1 = require("../services/updateOrderService");
 const socket_1 = require("../utils/socket");
@@ -82,3 +82,15 @@ const updateOrder = async (req, res) => {
     }
 };
 exports.updateOrder = updateOrder;
+const deleteOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await (0, orderService_1.deleteOrder)(id);
+        res.status(200).json({ message: 'Order deleted successfully' });
+    }
+    catch (error) {
+        console.error(`Error deleting order ${req.params.id}:`, error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+};
+exports.deleteOrder = deleteOrder;
