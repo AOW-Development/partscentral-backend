@@ -18,7 +18,8 @@ const httpServer = (0, http_1.createServer)(app);
 const io = (0, socket_1.initSocket)(httpServer);
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:4000';
-const allowedOrigins = [FRONTEND_URL, DASHBOARD_URL];
+const WITH_WWW = process.env.WITH_WWW;
+const allowedOrigins = [FRONTEND_URL, DASHBOARD_URL, WITH_WWW];
 // Configure CORS with specific options
 app.use((0, cors_1.default)({
     origin: function (origin, callback) {

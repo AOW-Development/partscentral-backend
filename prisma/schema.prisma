@@ -328,6 +328,12 @@ model YardInfo {
   updatedAt            DateTime  @updatedAt
   createdAt            DateTime  @default(now())
   reason               String?
+
+  // yard prices
+  yardTaxesPrice       Decimal?  @db.Decimal(18,2)
+  yardHandlingFee      Decimal?  @db.Decimal(18,2)
+  yardProcessingFee    Decimal?  @db.Decimal(18,2)
+  yardCorePrice        Decimal?  @db.Decimal(18,2)
 }
 
 model YardHistory {
@@ -351,7 +357,13 @@ model YardHistory {
   yardCost        Json?
   reason          String?
   yardCharge      String?
-  @@index([orderId])
+
+  // yard prices
+  yardTaxesPrice       Decimal?  @db.Decimal(18,2)
+  yardHandlingFee      Decimal?  @db.Decimal(18,2)
+  yardProcessingFee    Decimal?  @db.Decimal(18,2)
+  yardCorePrice        Decimal?  @db.Decimal(18,2)
+  
 }
 
 model Make {

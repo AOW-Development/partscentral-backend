@@ -70,6 +70,10 @@ export const updateOrder = async (orderId: string, data: any): Promise<Order> =>
         attnName: yardInfo.attnName,
         yardShippingType: yardInfo.yardShippingType,
         reason: yardInfo.reason,
+        yardTaxesPrice: yardInfo.yardTaxesPrice,
+        yardHandlingFee: yardInfo.yardHandlingFee,
+        yardProcessingFee: yardInfo.yardProcessingFee,
+        yardCorePrice: yardInfo.yardCorePrice,
       };
       if (yardInfo.yardWarranty) {
         const warrantyMap: { [key: string]: Warranty } = { '30 DAYS': Warranty.WARRANTY_30_DAYS, '60 DAYS': Warranty.WARRANTY_60_DAYS, '90 DAYS': Warranty.WARRANTY_90_DAYS, '6 MONTHS': Warranty.WARRANTY_6_MONTHS, '1 YEAR': Warranty.WARRANTY_1_YEAR };
