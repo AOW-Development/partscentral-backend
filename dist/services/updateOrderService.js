@@ -67,6 +67,10 @@ const updateOrder = async (orderId, data) => {
                 attnName: yardInfo.attnName,
                 yardShippingType: yardInfo.yardShippingType,
                 reason: yardInfo.reason,
+                yardTaxesPrice: yardInfo.yardTaxesPrice,
+                yardHandlingFee: yardInfo.yardHandlingFee,
+                yardProcessingFee: yardInfo.yardProcessingFee,
+                yardCorePrice: yardInfo.yardCorePrice,
             };
             if (yardInfo.yardWarranty) {
                 const warrantyMap = { '30 DAYS': client_1.Warranty.WARRANTY_30_DAYS, '60 DAYS': client_1.Warranty.WARRANTY_60_DAYS, '90 DAYS': client_1.Warranty.WARRANTY_90_DAYS, '6 MONTHS': client_1.Warranty.WARRANTY_6_MONTHS, '1 YEAR': client_1.Warranty.WARRANTY_1_YEAR };

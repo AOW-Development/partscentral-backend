@@ -37,9 +37,9 @@ exports.moveYardInfoToHistory = void 0;
 const yardService = __importStar(require("../services/yardService"));
 const moveYardInfoToHistory = async (req, res) => {
     const { orderId } = req.params;
-    const { reason } = req.body;
+    const { reason, yardCharge } = req.body;
     try {
-        await yardService.moveYardInfoToHistory(orderId, reason);
+        await yardService.moveYardInfoToHistory(orderId, reason, yardCharge);
         res.status(200).json({ message: 'Yard info moved to history successfully' });
     }
     catch (error) {

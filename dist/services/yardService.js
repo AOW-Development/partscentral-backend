@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.moveYardInfoToHistory = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
-const moveYardInfoToHistory = async (orderId, reason) => {
+const moveYardInfoToHistory = async (orderId, reason, yardCharge) => {
     console.log(`Starting transaction for orderId: ${orderId}`);
     return prisma.$transaction(async (tx) => {
         console.log('Finding yard info...');
@@ -32,6 +32,11 @@ const moveYardInfoToHistory = async (orderId, reason) => {
             yardCost: yardCost,
             reason: reason,
             attnName: yardInfo.attnName,
+            yardCharge: yardCharge,
+            yardTaxesPrice: yardInfo.yardTaxesPrice,
+            yardHandlingFee: yardInfo.yardHandlingFee,
+            yardProcessingFee: yardInfo.yardProcessingFee,
+            yardCorePrice: yardInfo.yardCorePrice,
         };
         console.log('Creating yard history with data:', historyData);
         const history = await tx.yardHistory.create({
