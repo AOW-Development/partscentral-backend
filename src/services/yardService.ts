@@ -40,6 +40,7 @@ export const moveYardInfoToHistory = async (orderId: string, reason: string, yar
       yardHandlingFee: yardInfo.yardHandlingFee,
       yardProcessingFee: yardInfo.yardProcessingFee,
       yardCorePrice: yardInfo.yardCorePrice,
+      
     };
 
     console.log('Creating yard history with data:', historyData);
