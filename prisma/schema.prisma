@@ -445,6 +445,11 @@ model ProductVariant_1 {
   inStock         Boolean
   product         Product     @relation("ProductToVariant", fields: [productId], references: [id])
   orderItems      OrderItem[]
+
+  product_img   String?
+  description   String? @db.Text
+  title         String?
+
 }
 
 
