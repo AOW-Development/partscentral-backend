@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const moveYardInfoToHistory = async (orderId: string, reason: string) => {
+export const moveYardInfoToHistory = async (orderId: string, reason: string, yardCharge: string) => {
   console.log(`Starting transaction for orderId: ${orderId}`);
   return prisma.$transaction(async (tx) => {
     console.log('Finding yard info...');
@@ -35,6 +35,12 @@ export const moveYardInfoToHistory = async (orderId: string, reason: string) => 
       yardCost: yardCost,
       reason: reason,
       attnName: yardInfo.attnName,
+      yardCharge: yardCharge,
+      yardTaxesPrice: yardInfo.yardTaxesPrice,
+      yardHandlingFee: yardInfo.yardHandlingFee,
+      yardProcessingFee: yardInfo.yardProcessingFee,
+      yardCorePrice: yardInfo.yardCorePrice,
+      
     };
 
     console.log('Creating yard history with data:', historyData);

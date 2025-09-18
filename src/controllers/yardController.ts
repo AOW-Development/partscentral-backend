@@ -4,10 +4,10 @@ import * as yardService from '../services/yardService';
 
 export const moveYardInfoToHistory = async (req: Request, res: Response) => {
   const { orderId } = req.params;
-  const { reason } = req.body;
+  const { reason,yardCharge } = req.body;
 
   try {
-    await yardService.moveYardInfoToHistory(orderId, reason);
+    await yardService.moveYardInfoToHistory(orderId, reason,yardCharge);
     res.status(200).json({ message: 'Yard info moved to history successfully' });
   } catch (error) {
     console.error(error);

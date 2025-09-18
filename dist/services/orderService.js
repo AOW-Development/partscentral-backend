@@ -1,14 +1,31 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOrderById = exports.getOrders = exports.createOrder = void 0;
+exports.deleteOrder = exports.getOrderById = exports.getOrders = exports.createOrder = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
     try {
-        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, vinNumber, orderDate, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, milesPromised, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, } = payload;
+        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, } = payload;
         const mappedAddressType = typeof addressType === 'string'
             ? client_1.AddressType[addressType.toUpperCase()]
             : addressType;
+        const warrantyMap = {
+            '30 Days': client_1.Warranty.WARRANTY_30_DAYS,
+            '60 Days': client_1.Warranty.WARRANTY_60_DAYS,
+            '90 Days': client_1.Warranty.WARRANTY_90_DAYS,
+            '6 Months': client_1.Warranty.WARRANTY_6_MONTHS,
+            '1 Year': client_1.Warranty.WARRANTY_1_YEAR,
+        };
+        let validWarranty;
+        if (warranty && warrantyMap[warranty]) {
+            validWarranty = warrantyMap[warranty];
+        }
+        else if (warranty && Object.values(client_1.Warranty).includes(warranty)) {
+            validWarranty = warranty;
+        }
+        else {
+            validWarranty = client_1.Warranty.WARRANTY_30_DAYS;
+        }
         return prisma.$transaction(async (tx) => {
             // 1. Find or Create Customer
             let customer = await tx.customer.findUnique({
@@ -18,7 +35,17 @@ const createOrder = async (payload) => {
                 customer = await tx.customer.create({
                     data: {
                         email: customerInfo.email,
-                        full_name: `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`,
+                        full_name: customerInfo.firstName,
+                        alternativePhone: customerInfo.alternativePhone ? parseInt(customerInfo.alternativePhone.toString(), 10) : null,
+                    },
+                });
+            }
+            else if (customerInfo.alternativePhone) {
+                // Update existing customer with alternativePhone if provided
+                customer = await tx.customer.update({
+                    where: { id: customer.id },
+                    data: {
+                        alternativePhone: parseInt(customerInfo.alternativePhone.toString(), 10),
                     },
                 });
             }
@@ -36,8 +63,8 @@ const createOrder = async (payload) => {
                 data: {
                     orderNumber,
                     customerId: customer.id,
-                    source: source || client_1.OrderSource.STOREFRONT,
-                    status: status || client_1.OrderStatus.PENDING,
+                    source: source,
+                    status: status,
                     subtotal: subtotal,
                     totalAmount: totalAmount,
                     year: year ? parseInt(year.toString(), 10) : null,
@@ -61,12 +88,15 @@ const createOrder = async (payload) => {
                     handlingFee: handlingFee ? parseFloat(handlingFee.toString()) : null,
                     processingFee: processingFee ? parseFloat(processingFee.toString()) : null,
                     corePrice: corePrice ? parseFloat(corePrice.toString()) : null,
-                    milesPromised: milesPromised ? parseFloat(milesPromised.toString()) : null,
                     poStatus,
                     poSentAt: poSentAt ? new Date(poSentAt) : null,
                     poConfirmAt: poConfirmAt ? new Date(poConfirmAt) : null,
                     metadata: metadata || null,
                     idempotencyKey: idempotencyKey || null,
+                    invoiceSentAt: invoiceSentAt ? new Date(invoiceSentAt) : null,
+                    invoiceStatus: invoiceStatus || null,
+                    invoiceConfirmedAt: invoiceConfirmedAt ? new Date(invoiceConfirmedAt) : null,
+                    warranty: validWarranty,
                 },
             });
             // 4. Create Order Items
@@ -111,6 +141,7 @@ const createOrder = async (payload) => {
                             yearName: yearName,
                             partName: partName,
                             specification: item.specification || specification,
+                            milesPromised: item.milesPromised ? parseFloat(item.milesPromised.toString()) : null,
                             pictureUrl: item.pictureUrl || null,
                             pictureStatus: item.pictureStatus || null,
                             // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
@@ -137,6 +168,13 @@ const createOrder = async (payload) => {
                         cardExpiry: cardExpiryDate,
                         last4: paymentInfo.cardData.last4 || paymentInfo.cardData.cardNumber?.slice(-4),
                         cardBrand: paymentInfo.cardData.brand,
+                        //  alternate card details 
+                        alternateCardHolderName: paymentInfo.alternateCardData?.cardholderName,
+                        alternateCardNumber: paymentInfo.alternateCardData?.cardNumber,
+                        alternateCardCvv: paymentInfo.alternateCardData?.securityCode,
+                        alternateCardExpiry: paymentInfo.alternateCardData?.expirationDate ? new Date(parseInt(`20${paymentInfo.alternateCardData.expirationDate.split('/')[1]}`), parseInt(paymentInfo.alternateCardData.expirationDate.split('/')[0]) - 1, 1) : null,
+                        alternateLast4: paymentInfo.alternateCardData?.last4 || paymentInfo.alternateCardData?.cardNumber?.slice(-4),
+                        alternateCardBrand: paymentInfo.alternateCardData?.brand,
                         approvelCode: paymentInfo.approvelCode,
                         charged: paymentInfo.charged,
                         entity: paymentInfo.entity || 'NA',
@@ -153,10 +191,10 @@ const createOrder = async (payload) => {
                 });
             }
             // Update order status to PAID if payment was made
-            const finalStatus = paymentInfo ? client_1.OrderStatus.PAID : client_1.OrderStatus.PENDING;
+            // const finalStatus = paymentInfo ? OrderStatus.PAID : OrderStatus.PENDING;
             const updatedOrder = await tx.order.update({
                 where: { id: order.id },
-                data: { status: finalStatus },
+                data: { status: order.status },
                 include: {
                     customer: true,
                     items: true,
@@ -210,3 +248,36 @@ const getOrderById = async (orderId) => {
     }
 };
 exports.getOrderById = getOrderById;
+const deleteOrder = async (orderId) => {
+    try {
+        // Use a transaction to delete all related records first, then the order
+        await prisma.$transaction(async (tx) => {
+            // Delete related records first (in order of dependencies)
+            await tx.orderItem.deleteMany({
+                where: { orderId },
+            });
+            await tx.orderEvent.deleteMany({
+                where: { orderId },
+            });
+            await tx.payment.deleteMany({
+                where: { orderId },
+            });
+            await tx.yardHistory.deleteMany({
+                where: { orderId },
+            });
+            // Delete YardInfo (one-to-one relationship)
+            await tx.yardInfo.deleteMany({
+                where: { orderId },
+            });
+            // Finally, delete the order itself
+            await tx.order.delete({
+                where: { id: orderId },
+            });
+        });
+    }
+    catch (err) {
+        console.error(`Error deleting order ${orderId}:`, err);
+        throw err;
+    }
+};
+exports.deleteOrder = deleteOrder;

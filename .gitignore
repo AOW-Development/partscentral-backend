@@ -6,3 +6,5 @@ node_modules
 /docs
 /engine-data
 /transmission-data
+
+/*.txt
