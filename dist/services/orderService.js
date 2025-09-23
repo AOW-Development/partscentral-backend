@@ -6,21 +6,22 @@ const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
     try {
         const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, } = payload;
-        const mappedAddressType = typeof addressType === 'string'
+        const mappedAddressType = typeof addressType === "string"
             ? client_1.AddressType[addressType.toUpperCase()]
             : addressType;
         const warrantyMap = {
-            '30 Days': client_1.Warranty.WARRANTY_30_DAYS,
-            '60 Days': client_1.Warranty.WARRANTY_60_DAYS,
-            '90 Days': client_1.Warranty.WARRANTY_90_DAYS,
-            '6 Months': client_1.Warranty.WARRANTY_6_MONTHS,
-            '1 Year': client_1.Warranty.WARRANTY_1_YEAR,
+            "30 Days": client_1.Warranty.WARRANTY_30_DAYS,
+            "60 Days": client_1.Warranty.WARRANTY_60_DAYS,
+            "90 Days": client_1.Warranty.WARRANTY_90_DAYS,
+            "6 Months": client_1.Warranty.WARRANTY_6_MONTHS,
+            "1 Year": client_1.Warranty.WARRANTY_1_YEAR,
         };
         let validWarranty;
         if (warranty && warrantyMap[warranty]) {
             validWarranty = warrantyMap[warranty];
         }
-        else if (warranty && Object.values(client_1.Warranty).includes(warranty)) {
+        else if (warranty &&
+            Object.values(client_1.Warranty).includes(warranty)) {
             validWarranty = warranty;
         }
         else {
@@ -35,8 +36,11 @@ const createOrder = async (payload) => {
                 customer = await tx.customer.create({
                     data: {
                         email: customerInfo.email,
-                        full_name: customerInfo.firstName,
-                        alternativePhone: customerInfo.alternativePhone ? parseInt(customerInfo.alternativePhone.toString(), 10) : null,
+                        full_name: customerInfo.firstName ||
+                            `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`,
+                        alternativePhone: customerInfo.alternativePhone
+                            ? customerInfo.alternativePhone.toString()
+                            : null,
                     },
                 });
             }
@@ -45,7 +49,7 @@ const createOrder = async (payload) => {
                 customer = await tx.customer.update({
                     where: { id: customer.id },
                     data: {
-                        alternativePhone: parseInt(customerInfo.alternativePhone.toString(), 10),
+                        alternativePhone: customerInfo.alternativePhone.toString(),
                     },
                 });
             }
@@ -81,12 +85,24 @@ const createOrder = async (payload) => {
                     shippingSnapshot: shippingInfo,
                     addressId: newAddress.id,
                     addressType: mappedAddressType || client_1.AddressType.RESIDENTIAL,
-                    customerNotes: customerNotes ? (typeof customerNotes === 'string' ? JSON.parse(customerNotes) : customerNotes) : null,
-                    yardNotes: yardNotes ? (typeof yardNotes === 'string' ? JSON.parse(yardNotes) : yardNotes) : null,
+                    customerNotes: customerNotes
+                        ? typeof customerNotes === "string"
+                            ? JSON.parse(customerNotes)
+                            : customerNotes
+                        : null,
+                    yardNotes: yardNotes
+                        ? typeof yardNotes === "string"
+                            ? JSON.parse(yardNotes)
+                            : yardNotes
+                        : null,
                     taxesAmount: taxesAmount ? parseFloat(taxesAmount.toString()) : null,
-                    shippingAmount: shippingAmount ? parseFloat(shippingAmount.toString()) : null,
+                    shippingAmount: shippingAmount
+                        ? parseFloat(shippingAmount.toString())
+                        : null,
                     handlingFee: handlingFee ? parseFloat(handlingFee.toString()) : null,
-                    processingFee: processingFee ? parseFloat(processingFee.toString()) : null,
+                    processingFee: processingFee
+                        ? parseFloat(processingFee.toString())
+                        : null,
                     corePrice: corePrice ? parseFloat(corePrice.toString()) : null,
                     poStatus,
                     poSentAt: poSentAt ? new Date(poSentAt) : null,
@@ -95,11 +111,14 @@ const createOrder = async (payload) => {
                     idempotencyKey: idempotencyKey || null,
                     invoiceSentAt: invoiceSentAt ? new Date(invoiceSentAt) : null,
                     invoiceStatus: invoiceStatus || null,
-                    invoiceConfirmedAt: invoiceConfirmedAt ? new Date(invoiceConfirmedAt) : null,
+                    invoiceConfirmedAt: invoiceConfirmedAt
+                        ? new Date(invoiceConfirmedAt)
+                        : null,
                     warranty: validWarranty,
                 },
             });
             // 4. Create Order Items
+            console.log("DEBUG: Creating order items with cartItems:", JSON.stringify(cartItems, null, 2));
             if (cartItems && cartItems.length > 0) {
                 for (const item of cartItems) {
                     const productVariant = await tx.productVariant_1.findUnique({
@@ -126,39 +145,43 @@ const createOrder = async (payload) => {
                     const modelName = product.modelYear.model.name;
                     const yearName = product.modelYear.year.value;
                     const partName = product.partType.name;
-                    const specification = product.description || '';
+                    const specification = product.description || "";
+                    const orderItemData = {
+                        orderId: order.id,
+                        productVariantId: productVariant.id,
+                        product_id: product.id,
+                        sku: productVariant.sku,
+                        quantity: item.quantity,
+                        unitPrice: item.price,
+                        lineTotal: item.price * item.quantity,
+                        makeName: makeName,
+                        modelName: modelName,
+                        yearName: yearName,
+                        partName: partName,
+                        specification: item.specification || specification,
+                        milesPromised: item.milesPromised
+                            ? parseFloat(item.milesPromised.toString())
+                            : null,
+                        pictureUrl: item.pictureUrl || null,
+                        pictureStatus: item.pictureStatus || null,
+                        // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
+                    };
+                    console.log("DEBUG: Creating order item with data:", JSON.stringify(orderItemData, null, 2));
                     await tx.orderItem.create({
-                        data: {
-                            orderId: order.id,
-                            productVariantId: productVariant.id,
-                            product_id: product.id,
-                            sku: productVariant.sku,
-                            quantity: item.quantity,
-                            unitPrice: item.price,
-                            lineTotal: item.price * item.quantity,
-                            makeName: makeName,
-                            modelName: modelName,
-                            yearName: yearName,
-                            partName: partName,
-                            specification: item.specification || specification,
-                            milesPromised: item.milesPromised ? parseFloat(item.milesPromised.toString()) : null,
-                            pictureUrl: item.pictureUrl || null,
-                            pictureStatus: item.pictureStatus || null,
-                            // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
-                        },
+                        data: orderItemData,
                     });
                 }
             }
             // 5. Create Payment (if paymentInfo is provided)
             if (paymentInfo && paymentInfo.cardData) {
-                const [expMonth, expYear] = paymentInfo.cardData.expirationDate.split('/');
+                const [expMonth, expYear] = paymentInfo.cardData.expirationDate.split("/");
                 const cardExpiryDate = new Date(parseInt(`20${expYear}`), parseInt(expMonth) - 1, 1);
                 await tx.payment.create({
                     data: {
                         orderId: order.id,
-                        provider: paymentInfo.provider || 'NA',
-                        amount: totalAmount,
-                        currency: paymentInfo.currency || 'USD',
+                        provider: paymentInfo.provider || "NA",
+                        amount: paymentInfo.amount || totalAmount,
+                        currency: paymentInfo.currency || "USD",
                         method: paymentInfo.paymentMethod,
                         status: client_1.PaymentStatus.SUCCEEDED,
                         paidAt: new Date(),
@@ -166,18 +189,25 @@ const createOrder = async (payload) => {
                         cardNumber: paymentInfo.cardData.cardNumber,
                         cardCvv: paymentInfo.cardData.securityCode,
                         cardExpiry: cardExpiryDate,
-                        last4: paymentInfo.cardData.last4 || paymentInfo.cardData.cardNumber?.slice(-4),
+                        last4: paymentInfo.cardData.last4 ||
+                            paymentInfo.cardData.cardNumber?.slice(-4),
                         cardBrand: paymentInfo.cardData.brand,
-                        //  alternate card details 
+                        //  alternate card details
                         alternateCardHolderName: paymentInfo.alternateCardData?.cardholderName,
                         alternateCardNumber: paymentInfo.alternateCardData?.cardNumber,
                         alternateCardCvv: paymentInfo.alternateCardData?.securityCode,
-                        alternateCardExpiry: paymentInfo.alternateCardData?.expirationDate ? new Date(parseInt(`20${paymentInfo.alternateCardData.expirationDate.split('/')[1]}`), parseInt(paymentInfo.alternateCardData.expirationDate.split('/')[0]) - 1, 1) : null,
-                        alternateLast4: paymentInfo.alternateCardData?.last4 || paymentInfo.alternateCardData?.cardNumber?.slice(-4),
+                        alternateCardExpiry: paymentInfo.alternateCardData?.expirationDate
+                            ? new Date(parseInt(`20${paymentInfo.alternateCardData.expirationDate.split("/")[1]}`), parseInt(paymentInfo.alternateCardData.expirationDate.split("/")[0]) - 1, 1)
+                            : null,
+                        alternateLast4: paymentInfo.alternateCardData?.last4 ||
+                            paymentInfo.alternateCardData?.cardNumber?.slice(-4),
                         alternateCardBrand: paymentInfo.alternateCardData?.brand,
                         approvelCode: paymentInfo.approvelCode,
                         charged: paymentInfo.charged,
-                        entity: paymentInfo.entity || 'NA',
+                        entity: paymentInfo.entity || "NA",
+                        chargedDate: paymentInfo.cardChargedDate
+                            ? new Date(paymentInfo.cardChargedDate)
+                            : null,
                     },
                 });
             }
@@ -205,7 +235,7 @@ const createOrder = async (payload) => {
         });
     }
     catch (err) {
-        console.error('OrderService error:', err, payload);
+        console.error("OrderService error:", err, payload);
         throw err;
     }
 };
@@ -218,12 +248,12 @@ const getOrders = async () => {
                 items: true,
             },
             orderBy: {
-                createdAt: 'desc',
+                createdAt: "desc",
             },
         });
     }
     catch (err) {
-        console.error('Error fetching orders:', err);
+        console.error("Error fetching orders:", err);
         throw err;
     }
 };
