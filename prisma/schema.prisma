@@ -37,6 +37,7 @@ enum AddressType {
   RESIDENTIAL
   TERMINAL
   COMMERCIAL
+  YET_TO_UPDATE
 }
 
 enum PaymentStatus {
@@ -70,8 +71,8 @@ model Customer {
   otp           String?
   otpExpiry     DateTime?
 
-  alternativePhone Int?
-  phone Int?
+  alternativePhone String?
+  phone String?
 }
 
 model Order {
@@ -223,7 +224,7 @@ model Payment {
 
   approvelCode        String?
   charged             String?
-
+  chargedDate         DateTime?
 
   // Metadata
   entity              String
