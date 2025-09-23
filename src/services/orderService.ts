@@ -4,11 +4,10 @@ import {
   AddressType,
   PaymentStatus,
   OrderStatus,
+  Warranty,
 } from "@prisma/client";
-import { PrismaClient, OrderSource, AddressType, PaymentStatus, OrderStatus ,Warranty} from '@prisma/client';
 
 const prisma = new PrismaClient();
-
 
 interface CreateOrderPayload {
   // Required fields
@@ -60,10 +59,10 @@ interface CreateOrderPayload {
 
   // Yard information
   yardInfo?: any;
-  
+
   // Warranty
   warranty?: string;
-  
+
   // Metadata
   metadata?: any;
   idempotencyKey?: string;
@@ -121,23 +120,25 @@ export const createOrder = async (
       typeof addressType === "string"
         ? AddressType[addressType.toUpperCase() as keyof typeof AddressType]
         : addressType;
-        const warrantyMap: { [key: string]: Warranty } = {
-          '30 Days': Warranty.WARRANTY_30_DAYS,
-          '60 Days': Warranty.WARRANTY_60_DAYS,
-          '90 Days': Warranty.WARRANTY_90_DAYS,
-          '6 Months': Warranty.WARRANTY_6_MONTHS,
-          '1 Year': Warranty.WARRANTY_1_YEAR,
-        };
+    const warrantyMap: { [key: string]: Warranty } = {
+      "30 Days": Warranty.WARRANTY_30_DAYS,
+      "60 Days": Warranty.WARRANTY_60_DAYS,
+      "90 Days": Warranty.WARRANTY_90_DAYS,
+      "6 Months": Warranty.WARRANTY_6_MONTHS,
+      "1 Year": Warranty.WARRANTY_1_YEAR,
+    };
 
-        let validWarranty: Warranty;
-        if (warranty && warrantyMap[warranty]) {
-          validWarranty = warrantyMap[warranty];
-        } else if (warranty && Object.values(Warranty).includes(warranty as Warranty)) {
-          validWarranty = warranty as Warranty;
-        } else {
-          validWarranty = Warranty.WARRANTY_30_DAYS;
-        }
-
+    let validWarranty: Warranty;
+    if (warranty && warrantyMap[warranty]) {
+      validWarranty = warrantyMap[warranty];
+    } else if (
+      warranty &&
+      Object.values(Warranty).includes(warranty as Warranty)
+    ) {
+      validWarranty = warranty as Warranty;
+    } else {
+      validWarranty = Warranty.WARRANTY_30_DAYS;
+    }
 
     return prisma.$transaction(async (tx) => {
       // 1. Find or Create Customer
@@ -149,14 +150,14 @@ export const createOrder = async (
         customer = await tx.customer.create({
           data: {
             email: customerInfo.email,
-            full_name: `${customerInfo.firstName || billingInfo.firstName} ${
-              customerInfo.lastName || billingInfo.lastName
-            }`,
+            full_name:
+              customerInfo.firstName ||
+              `${customerInfo.firstName || billingInfo.firstName} ${
+                customerInfo.lastName || billingInfo.lastName
+              }`,
             alternativePhone: customerInfo.alternativePhone
               ? customerInfo.alternativePhone.toString()
               : null,
-            full_name: customerInfo.firstName,
-            alternativePhone: customerInfo.alternativePhone ? parseInt(customerInfo.alternativePhone.toString(), 10) : null,
           },
         });
       } else if (customerInfo.alternativePhone) {
@@ -231,7 +232,9 @@ export const createOrder = async (
 
           invoiceSentAt: invoiceSentAt ? new Date(invoiceSentAt) : null,
           invoiceStatus: invoiceStatus || null,
-          invoiceConfirmedAt: invoiceConfirmedAt ? new Date(invoiceConfirmedAt) : null,
+          invoiceConfirmedAt: invoiceConfirmedAt
+            ? new Date(invoiceConfirmedAt)
+            : null,
           warranty: validWarranty,
         },
       });
@@ -317,7 +320,7 @@ export const createOrder = async (
           data: {
             orderId: order.id,
             provider: paymentInfo.provider || "NA",
-            amount: totalAmount,
+            amount: paymentInfo.amount || totalAmount,
             currency: paymentInfo.currency || "USD",
             method: paymentInfo.paymentMethod,
             status: PaymentStatus.SUCCEEDED,
@@ -358,7 +361,10 @@ export const createOrder = async (
             approvelCode: paymentInfo.approvelCode,
             charged: paymentInfo.charged,
             entity: paymentInfo.entity || "NA",
-          },
+            chargedDate: paymentInfo.cardChargedDate
+              ? new Date(paymentInfo.cardChargedDate)
+              : null,
+          } as any,
         });
       }
 
