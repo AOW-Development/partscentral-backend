@@ -166,17 +166,21 @@ model OrderItem {
   pictureUrl      String? @db.LongText
   
   // Product Reference
-  productVariant  ProductVariant_1 @relation(fields: [productVariantId], references: [id])
-  productVariantId Int
+  productVariant  ProductVariant_1? @relation(fields: [productVariantId], references: [id])
+  productVariantId Int?
   
-  product         Product @relation(fields: [product_id], references: [id])
-  product_id Int 
+  product         Product? @relation(fields: [product_id], references: [id])
+  product_id Int? 
   sku             String
   
   // Pricing
   quantity        Int
   unitPrice       Decimal   @db.Decimal(18,2)
   lineTotal       Decimal   @db.Decimal(18,2)
+  taxesPrice      Decimal?  @db.Decimal(18,2)
+  handlingPrice   Decimal?  @db.Decimal(18,2)
+  processingPrice Decimal?  @db.Decimal(18,2)
+  corePrice       Decimal?  @db.Decimal(18,2)
   
   // Metadata
   metadata        Json?
