@@ -204,6 +204,18 @@ const updateOrder = async (orderId, data) => {
                             quantity: item.quantity,
                             unitPrice: item.price,
                             lineTotal: item.price * item.quantity,
+                            taxesPrice: item.taxesPrice
+                                ? parseFloat(item.taxesPrice.toString())
+                                : null,
+                            handlingPrice: item.handlingPrice
+                                ? parseFloat(item.handlingPrice.toString())
+                                : null,
+                            processingPrice: item.processingPrice
+                                ? parseFloat(item.processingPrice.toString())
+                                : null,
+                            corePrice: item.corePrice
+                                ? parseFloat(item.corePrice.toString())
+                                : null,
                             specification: item.specification || existingItem.specification,
                             milesPromised: item.milesPromised
                                 ? parseFloat(item.milesPromised.toString())
@@ -214,36 +226,78 @@ const updateOrder = async (orderId, data) => {
                     });
                 }
                 else {
-                    const productVariant = await tx.productVariant_1.findUnique({
-                        where: { sku: item.sku },
-                        include: {
-                            product: {
-                                include: {
-                                    modelYear: {
-                                        include: { model: { include: { make: true } }, year: true },
+                    // Check if this is a manual item (no real product variant)
+                    const isManualItem = item.sku.startsWith("manual-");
+                    let productVariant = null;
+                    let product = null;
+                    let makeName = "";
+                    let modelName = "";
+                    let yearName = "";
+                    let partName = "";
+                    if (isManualItem) {
+                        // For manual items, extract info from the item name or use defaults
+                        const nameParts = item.name.split(" ");
+                        makeName = nameParts[0] || "Manual";
+                        modelName = nameParts[1] || "Item";
+                        yearName = nameParts[2] || "2024";
+                        partName = nameParts.slice(3).join(" ") || "Part";
+                    }
+                    else {
+                        // For real product variants, find the variant
+                        productVariant = await tx.productVariant_1.findUnique({
+                            where: { sku: item.sku },
+                            include: {
+                                product: {
+                                    include: {
+                                        modelYear: {
+                                            include: {
+                                                model: { include: { make: true } },
+                                                year: true,
+                                            },
+                                        },
+                                        partType: true,
                                     },
-                                    partType: true,
                                 },
                             },
-                        },
-                    });
-                    if (!productVariant || !productVariant.product)
-                        throw new Error(`Product variant with SKU ${item.sku} not found.`);
-                    const { product } = productVariant;
+                        });
+                        if (!productVariant || !productVariant.product)
+                            throw new Error(`Product variant with SKU ${item.sku} not found.`);
+                        product = productVariant.product;
+                        makeName = product.modelYear.model.make.name;
+                        modelName = product.modelYear.model.name;
+                        yearName = product.modelYear.year.value;
+                        partName = product.partType.name;
+                    }
                     await tx.orderItem.create({
                         data: {
                             orderId: orderId,
-                            productVariantId: productVariant.id,
-                            product_id: product.id,
+                            productVariantId: isManualItem
+                                ? null
+                                : productVariant?.id || null,
+                            product_id: isManualItem ? null : product?.id || null,
                             sku: item.sku,
                             quantity: item.quantity,
                             unitPrice: item.price,
                             lineTotal: item.price * item.quantity,
-                            makeName: product.modelYear.model.make.name,
-                            modelName: product.modelYear.model.name,
-                            yearName: product.modelYear.year.value,
-                            partName: product.partType.name,
-                            specification: item.specification || product.description || "",
+                            taxesPrice: item.taxesPrice
+                                ? parseFloat(item.taxesPrice.toString())
+                                : null,
+                            handlingPrice: item.handlingPrice
+                                ? parseFloat(item.handlingPrice.toString())
+                                : null,
+                            processingPrice: item.processingPrice
+                                ? parseFloat(item.processingPrice.toString())
+                                : null,
+                            corePrice: item.corePrice
+                                ? parseFloat(item.corePrice.toString())
+                                : null,
+                            makeName: makeName,
+                            modelName: modelName,
+                            yearName: yearName,
+                            partName: partName,
+                            specification: item.specification ||
+                                (product ? product.description : "") ||
+                                "",
                             milesPromised: item.milesPromised
                                 ? parseFloat(item.milesPromised.toString())
                                 : null,

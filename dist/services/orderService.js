@@ -121,39 +121,75 @@ const createOrder = async (payload) => {
             console.log("DEBUG: Creating order items with cartItems:", JSON.stringify(cartItems, null, 2));
             if (cartItems && cartItems.length > 0) {
                 for (const item of cartItems) {
-                    const productVariant = await tx.productVariant_1.findUnique({
-                        where: { sku: item.id },
-                        include: {
-                            product: {
-                                include: {
-                                    modelYear: {
-                                        include: {
-                                            model: { include: { make: true } },
-                                            year: true,
+                    // Check if this is a manual item (no real product variant)
+                    const isManualItem = item.id.startsWith("manual-");
+                    console.log("DEBUG: Processing item:", { id: item.id, isManualItem });
+                    let productVariant = null;
+                    let product = null;
+                    let makeName = "";
+                    let modelName = "";
+                    let yearName = "";
+                    let partName = "";
+                    let specification = "";
+                    if (isManualItem) {
+                        console.log("DEBUG: Processing as manual item");
+                        // For manual items, extract info from the item name or use defaults
+                        const nameParts = item.name.split(" ");
+                        makeName = nameParts[0] || "Manual";
+                        modelName = nameParts[1] || "Item";
+                        yearName = nameParts[2] || "2024";
+                        partName = nameParts.slice(3).join(" ") || "Part";
+                        specification = item.specification || "";
+                    }
+                    else {
+                        console.log("DEBUG: Processing as real product variant");
+                        // For real product variants, find the variant
+                        productVariant = await tx.productVariant_1.findUnique({
+                            where: { sku: item.id },
+                            include: {
+                                product: {
+                                    include: {
+                                        modelYear: {
+                                            include: {
+                                                model: { include: { make: true } },
+                                                year: true,
+                                            },
                                         },
+                                        partType: true,
                                     },
-                                    partType: true,
                                 },
                             },
-                        },
-                    });
-                    if (!productVariant || !productVariant.product) {
-                        throw new Error(`Product variant with SKU ${item.id} not found.`);
+                        });
+                        if (!productVariant || !productVariant.product) {
+                            throw new Error(`Product variant with SKU ${item.id} not found.`);
+                        }
+                        product = productVariant.product;
+                        makeName = product.modelYear.model.make.name;
+                        modelName = product.modelYear.model.name;
+                        yearName = product.modelYear.year.value;
+                        partName = product.partType.name;
+                        specification = product.description || "";
                     }
-                    const product = productVariant.product;
-                    const makeName = product.modelYear.model.make.name;
-                    const modelName = product.modelYear.model.name;
-                    const yearName = product.modelYear.year.value;
-                    const partName = product.partType.name;
-                    const specification = product.description || "";
                     const orderItemData = {
                         orderId: order.id,
-                        productVariantId: productVariant.id,
-                        product_id: product.id,
-                        sku: productVariant.sku,
+                        productVariantId: isManualItem ? null : productVariant?.id || null,
+                        product_id: isManualItem ? null : product?.id || null,
+                        sku: item.id,
                         quantity: item.quantity,
                         unitPrice: item.price,
                         lineTotal: item.price * item.quantity,
+                        taxesPrice: item.taxesPrice
+                            ? parseFloat(item.taxesPrice.toString())
+                            : null,
+                        handlingPrice: item.handlingPrice
+                            ? parseFloat(item.handlingPrice.toString())
+                            : null,
+                        processingPrice: item.processingPrice
+                            ? parseFloat(item.processingPrice.toString())
+                            : null,
+                        corePrice: item.corePrice
+                            ? parseFloat(item.corePrice.toString())
+                            : null,
                         makeName: makeName,
                         modelName: modelName,
                         yearName: yearName,
