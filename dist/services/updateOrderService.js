@@ -204,6 +204,18 @@ const updateOrder = async (orderId, data) => {
                             quantity: item.quantity,
                             unitPrice: item.price,
                             lineTotal: item.price * item.quantity,
+                            taxesPrice: item.taxesPrice
+                                ? parseFloat(item.taxesPrice.toString())
+                                : null,
+                            handlingPrice: item.handlingPrice
+                                ? parseFloat(item.handlingPrice.toString())
+                                : null,
+                            processingPrice: item.processingPrice
+                                ? parseFloat(item.processingPrice.toString())
+                                : null,
+                            corePrice: item.corePrice
+                                ? parseFloat(item.corePrice.toString())
+                                : null,
                             specification: item.specification || existingItem.specification,
                             milesPromised: item.milesPromised
                                 ? parseFloat(item.milesPromised.toString())
@@ -214,36 +226,78 @@ const updateOrder = async (orderId, data) => {
                     });
                 }
                 else {
-                    const productVariant = await tx.productVariant_1.findUnique({
-                        where: { sku: item.sku },
-                        include: {
-                            product: {
-                                include: {
-                                    modelYear: {
-                                        include: { model: { include: { make: true } }, year: true },
+                    // Check if this is a manual item (no real product variant)
+                    const isManualItem = item.sku.startsWith("manual-");
+                    let productVariant = null;
+                    let product = null;
+                    let makeName = "";
+                    let modelName = "";
+                    let yearName = "";
+                    let partName = "";
+                    if (isManualItem) {
+                        // For manual items, extract info from the item name or use defaults
+                        const nameParts = item.name.split(" ");
+                        makeName = nameParts[0] || "Manual";
+                        modelName = nameParts[1] || "Item";
+                        yearName = nameParts[2] || "2024";
+                        partName = nameParts.slice(3).join(" ") || "Part";
+                    }
+                    else {
+                        // For real product variants, find the variant
+                        productVariant = await tx.productVariant_1.findUnique({
+                            where: { sku: item.sku },
+                            include: {
+                                product: {
+                                    include: {
+                                        modelYear: {
+                                            include: {
+                                                model: { include: { make: true } },
+                                                year: true,
+                                            },
+                                        },
+                                        partType: true,
                                     },
-                                    partType: true,
                                 },
                             },
-                        },
-                    });
-                    if (!productVariant || !productVariant.product)
-                        throw new Error(`Product variant with SKU ${item.sku} not found.`);
-                    const { product } = productVariant;
+                        });
+                        if (!productVariant || !productVariant.product)
+                            throw new Error(`Product variant with SKU ${item.sku} not found.`);
+                        product = productVariant.product;
+                        makeName = product.modelYear.model.make.name;
+                        modelName = product.modelYear.model.name;
+                        yearName = product.modelYear.year.value;
+                        partName = product.partType.name;
+                    }
                     await tx.orderItem.create({
                         data: {
                             orderId: orderId,
-                            productVariantId: productVariant.id,
-                            product_id: product.id,
+                            productVariantId: isManualItem
+                                ? null
+                                : productVariant?.id || null,
+                            product_id: isManualItem ? null : product?.id || null,
                             sku: item.sku,
                             quantity: item.quantity,
                             unitPrice: item.price,
                             lineTotal: item.price * item.quantity,
-                            makeName: product.modelYear.model.make.name,
-                            modelName: product.modelYear.model.name,
-                            yearName: product.modelYear.year.value,
-                            partName: product.partType.name,
-                            specification: item.specification || product.description || "",
+                            taxesPrice: item.taxesPrice
+                                ? parseFloat(item.taxesPrice.toString())
+                                : null,
+                            handlingPrice: item.handlingPrice
+                                ? parseFloat(item.handlingPrice.toString())
+                                : null,
+                            processingPrice: item.processingPrice
+                                ? parseFloat(item.processingPrice.toString())
+                                : null,
+                            corePrice: item.corePrice
+                                ? parseFloat(item.corePrice.toString())
+                                : null,
+                            makeName: makeName,
+                            modelName: modelName,
+                            yearName: yearName,
+                            partName: partName,
+                            specification: item.specification ||
+                                (product ? product.description : "") ||
+                                "",
                             milesPromised: item.milesPromised
                                 ? parseFloat(item.milesPromised.toString())
                                 : null,
@@ -258,73 +312,71 @@ const updateOrder = async (orderId, data) => {
                 await tx.orderItem.delete({ where: { id: itemToRemove.id } });
             }
         }
-        // 5. Handle Payment Upsert with explicit parsing
+        // 5. Handle Multiple Payments Upsert with explicit parsing
         if (paymentInfo) {
+            console.log("DEBUG: Payment Info received in updateOrderService:", paymentInfo);
+            // Handle multiple payment entries
+            const paymentsToProcess = Array.isArray(paymentInfo)
+                ? paymentInfo
+                : [paymentInfo];
+            console.log("DEBUG: Payments to process:", paymentsToProcess);
             const getCardExpiry = (dateStr) => {
                 if (!dateStr || !dateStr.includes("/"))
                     return null;
                 const [expMonth, expYear] = dateStr.split("/");
                 return new Date(parseInt(`20${expYear}`), parseInt(expMonth) - 1, 1);
             };
-            const paymentData = {
-                provider: paymentInfo.provider || "NA",
-                amount: paymentInfo.amount !== undefined
-                    ? parseFloat(paymentInfo.amount)
-                    : parseFloat(orderData.totalAmount),
-                currency: paymentInfo.currency || "USD",
-                method: paymentInfo.paymentMethod,
-                status: paymentInfo.status || "PENDING",
-                paidAt: new Date(),
-                approvelCode: paymentInfo.approvelCode,
-                charged: paymentInfo.charged,
-                entity: paymentInfo.entity || "NA",
-                chargedDate: paymentInfo.cardChargedDate
-                    ? new Date(paymentInfo.cardChargedDate)
-                    : null,
-            };
-            if (paymentInfo.cardData) {
-                paymentData.cardHolderName = paymentInfo.cardData.cardholderName;
-                paymentData.cardNumber = paymentInfo.cardData.cardNumber;
-                paymentData.cardCvv = paymentInfo.cardData.securityCode;
-                paymentData.cardExpiry = getCardExpiry(paymentInfo.cardData.expirationDate);
-                paymentData.last4 =
-                    paymentInfo.cardData.last4 ||
-                        paymentInfo.cardData.cardNumber?.slice(-4);
-                paymentData.cardBrand = paymentInfo.cardData.brand;
-            }
-            if (paymentInfo.alternateCardData) {
-                paymentData.alternateCardHolderName =
-                    paymentInfo.alternateCardData.cardholderName;
-                paymentData.alternateCardNumber =
-                    paymentInfo.alternateCardData.cardNumber;
-                paymentData.alternateCardCvv =
-                    paymentInfo.alternateCardData.securityCode;
-                paymentData.alternateCardExpiry = getCardExpiry(paymentInfo.alternateCardData.expirationDate);
-                paymentData.alternateLast4 =
-                    paymentInfo.alternateCardData.last4 ||
-                        paymentInfo.alternateCardData.cardNumber?.slice(-4);
-                paymentData.alternateCardBrand = paymentInfo.alternateCardData.brand;
-            }
-            const existingPayment = await tx.payment.findFirst({
+            // Delete existing payments first
+            await tx.payment.deleteMany({
                 where: { orderId },
             });
-            if (existingPayment) {
-                await tx.payment.update({
-                    where: { id: existingPayment.id },
-                    data: paymentData,
-                });
-            }
-            else {
-                if (paymentData.cardHolderName &&
-                    paymentData.cardNumber &&
-                    paymentData.cardCvv &&
-                    paymentData.cardExpiry) {
+            // Create new payments
+            for (const payment of paymentsToProcess) {
+                if (payment) {
+                    const paymentData = {
+                        provider: payment.provider || "NA",
+                        amount: payment.amount !== undefined
+                            ? parseFloat(payment.amount)
+                            : parseFloat(orderData.totalAmount),
+                        currency: payment.currency || "USD",
+                        method: payment.paymentMethod || payment.merchantMethod,
+                        status: payment.status || "PENDING",
+                        paidAt: new Date(),
+                        approvelCode: payment.approvelCode || payment.approvalCode,
+                        charged: payment.charged,
+                        entity: payment.entity || "NA",
+                        chargedDate: payment.cardChargedDate
+                            ? new Date(payment.cardChargedDate)
+                            : null,
+                        // Card details with defaults
+                        cardHolderName: payment.cardData?.cardholderName || "",
+                        cardNumber: payment.cardData?.cardNumber || "",
+                        cardCvv: payment.cardData?.securityCode || "",
+                        cardExpiry: payment.cardData?.expirationDate
+                            ? getCardExpiry(payment.cardData.expirationDate)
+                            : new Date(),
+                        last4: payment.cardData?.last4 ||
+                            payment.cardData?.cardNumber?.slice(-4) ||
+                            "",
+                        cardBrand: payment.cardData?.brand || "",
+                        // Alternate card details with defaults
+                        alternateCardHolderName: payment.alternateCardData?.cardholderName || "",
+                        alternateCardNumber: payment.alternateCardData?.cardNumber || "",
+                        alternateCardCvv: payment.alternateCardData?.securityCode || "",
+                        alternateCardExpiry: payment.alternateCardData?.expirationDate
+                            ? getCardExpiry(payment.alternateCardData.expirationDate)
+                            : null,
+                        alternateLast4: payment.alternateCardData?.last4 ||
+                            payment.alternateCardData?.cardNumber?.slice(-4) ||
+                            "",
+                        alternateCardBrand: payment.alternateCardData?.brand || "",
+                    };
                     await tx.payment.create({
-                        data: { orderId: orderId, ...paymentData },
+                        data: {
+                            order: { connect: { id: orderId } },
+                            ...paymentData,
+                        },
                     });
-                }
-                else {
-                    console.log(`Skipping payment creation for order ${orderId} due to missing required card details.`);
                 }
             }
         }
@@ -357,6 +409,8 @@ const updateOrder = async (orderId, data) => {
             updateData.billingSnapshot = billingInfo;
         if (shippingInfo)
             updateData.shippingSnapshot = shippingInfo;
+        if (updateData.internalNotes !== undefined)
+            updateData.internalNotes = updateData.internalNotes;
         const updatedOrder = await tx.order.update({
             where: { id: orderId },
             data: updateData,

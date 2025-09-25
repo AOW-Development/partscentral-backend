@@ -5,7 +5,7 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
     try {
-        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, } = payload;
+        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, internalNotes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, } = payload;
         const mappedAddressType = typeof addressType === "string"
             ? client_1.AddressType[addressType.toUpperCase()]
             : addressType;
@@ -70,6 +70,7 @@ const createOrder = async (payload) => {
                     source: source,
                     status: status,
                     subtotal: subtotal,
+                    internalNotes: internalNotes,
                     totalAmount: totalAmount,
                     year: year ? parseInt(year.toString(), 10) : null,
                     saleMadeBy,
@@ -121,39 +122,75 @@ const createOrder = async (payload) => {
             console.log("DEBUG: Creating order items with cartItems:", JSON.stringify(cartItems, null, 2));
             if (cartItems && cartItems.length > 0) {
                 for (const item of cartItems) {
-                    const productVariant = await tx.productVariant_1.findUnique({
-                        where: { sku: item.id },
-                        include: {
-                            product: {
-                                include: {
-                                    modelYear: {
-                                        include: {
-                                            model: { include: { make: true } },
-                                            year: true,
+                    // Check if this is a manual item (no real product variant)
+                    const isManualItem = item.id.startsWith("manual-");
+                    console.log("DEBUG: Processing item:", { id: item.id, isManualItem });
+                    let productVariant = null;
+                    let product = null;
+                    let makeName = "";
+                    let modelName = "";
+                    let yearName = "";
+                    let partName = "";
+                    let specification = "";
+                    if (isManualItem) {
+                        console.log("DEBUG: Processing as manual item");
+                        // For manual items, extract info from the item name or use defaults
+                        const nameParts = item.name.split(" ");
+                        makeName = nameParts[0] || "Manual";
+                        modelName = nameParts[1] || "Item";
+                        yearName = nameParts[2] || "2024";
+                        partName = nameParts.slice(3).join(" ") || "Part";
+                        specification = item.specification || "";
+                    }
+                    else {
+                        console.log("DEBUG: Processing as real product variant");
+                        // For real product variants, find the variant
+                        productVariant = await tx.productVariant_1.findUnique({
+                            where: { sku: item.id },
+                            include: {
+                                product: {
+                                    include: {
+                                        modelYear: {
+                                            include: {
+                                                model: { include: { make: true } },
+                                                year: true,
+                                            },
                                         },
+                                        partType: true,
                                     },
-                                    partType: true,
                                 },
                             },
-                        },
-                    });
-                    if (!productVariant || !productVariant.product) {
-                        throw new Error(`Product variant with SKU ${item.id} not found.`);
+                        });
+                        if (!productVariant || !productVariant.product) {
+                            throw new Error(`Product variant with SKU ${item.id} not found.`);
+                        }
+                        product = productVariant.product;
+                        makeName = product.modelYear.model.make.name;
+                        modelName = product.modelYear.model.name;
+                        yearName = product.modelYear.year.value;
+                        partName = product.partType.name;
+                        specification = product.description || "";
                     }
-                    const product = productVariant.product;
-                    const makeName = product.modelYear.model.make.name;
-                    const modelName = product.modelYear.model.name;
-                    const yearName = product.modelYear.year.value;
-                    const partName = product.partType.name;
-                    const specification = product.description || "";
                     const orderItemData = {
                         orderId: order.id,
-                        productVariantId: productVariant.id,
-                        product_id: product.id,
-                        sku: productVariant.sku,
+                        productVariantId: isManualItem ? null : productVariant?.id || null,
+                        product_id: isManualItem ? null : product?.id || null,
+                        sku: item.id,
                         quantity: item.quantity,
                         unitPrice: item.price,
                         lineTotal: item.price * item.quantity,
+                        taxesPrice: item.taxesPrice
+                            ? parseFloat(item.taxesPrice.toString())
+                            : null,
+                        handlingPrice: item.handlingPrice
+                            ? parseFloat(item.handlingPrice.toString())
+                            : null,
+                        processingPrice: item.processingPrice
+                            ? parseFloat(item.processingPrice.toString())
+                            : null,
+                        corePrice: item.corePrice
+                            ? parseFloat(item.corePrice.toString())
+                            : null,
                         makeName: makeName,
                         modelName: modelName,
                         yearName: yearName,
@@ -172,44 +209,67 @@ const createOrder = async (payload) => {
                     });
                 }
             }
-            // 5. Create Payment (if paymentInfo is provided)
-            if (paymentInfo && paymentInfo.cardData) {
-                const [expMonth, expYear] = paymentInfo.cardData.expirationDate.split("/");
-                const cardExpiryDate = new Date(parseInt(`20${expYear}`), parseInt(expMonth) - 1, 1);
-                await tx.payment.create({
-                    data: {
-                        orderId: order.id,
-                        provider: paymentInfo.provider || "NA",
-                        amount: paymentInfo.amount || totalAmount,
-                        currency: paymentInfo.currency || "USD",
-                        method: paymentInfo.paymentMethod,
-                        status: client_1.PaymentStatus.SUCCEEDED,
-                        paidAt: new Date(),
-                        cardHolderName: paymentInfo.cardData.cardholderName,
-                        cardNumber: paymentInfo.cardData.cardNumber,
-                        cardCvv: paymentInfo.cardData.securityCode,
-                        cardExpiry: cardExpiryDate,
-                        last4: paymentInfo.cardData.last4 ||
-                            paymentInfo.cardData.cardNumber?.slice(-4),
-                        cardBrand: paymentInfo.cardData.brand,
-                        //  alternate card details
-                        alternateCardHolderName: paymentInfo.alternateCardData?.cardholderName,
-                        alternateCardNumber: paymentInfo.alternateCardData?.cardNumber,
-                        alternateCardCvv: paymentInfo.alternateCardData?.securityCode,
-                        alternateCardExpiry: paymentInfo.alternateCardData?.expirationDate
-                            ? new Date(parseInt(`20${paymentInfo.alternateCardData.expirationDate.split("/")[1]}`), parseInt(paymentInfo.alternateCardData.expirationDate.split("/")[0]) - 1, 1)
-                            : null,
-                        alternateLast4: paymentInfo.alternateCardData?.last4 ||
-                            paymentInfo.alternateCardData?.cardNumber?.slice(-4),
-                        alternateCardBrand: paymentInfo.alternateCardData?.brand,
-                        approvelCode: paymentInfo.approvelCode,
-                        charged: paymentInfo.charged,
-                        entity: paymentInfo.entity || "NA",
-                        chargedDate: paymentInfo.cardChargedDate
-                            ? new Date(paymentInfo.cardChargedDate)
-                            : null,
-                    },
-                });
+            // 5. Create Payments (if paymentInfo is provided)
+            if (paymentInfo) {
+                console.log("DEBUG: Payment Info received in orderService:", paymentInfo);
+                // Handle multiple payment entries
+                const paymentsToCreate = Array.isArray(paymentInfo)
+                    ? paymentInfo
+                    : [paymentInfo];
+                console.log("DEBUG: Payments to create:", paymentsToCreate);
+                for (const payment of paymentsToCreate) {
+                    if (payment) {
+                        console.log("DEBUG: Processing payment entry:", {
+                            id: payment.id,
+                            merchantMethod: payment.merchantMethod,
+                            totalPrice: payment.totalPrice,
+                            amount: payment.amount,
+                            finalAmount: payment.amount || payment.totalPrice || totalAmount,
+                        });
+                        // Handle card data if provided
+                        let cardExpiryDate = null;
+                        if (payment.cardData && payment.cardData.expirationDate) {
+                            const [expMonth, expYear] = payment.cardData.expirationDate.split("/");
+                            cardExpiryDate = new Date(parseInt(`20${expYear}`), parseInt(expMonth) - 1, 1);
+                        }
+                        await tx.payment.create({
+                            data: {
+                                order: { connect: { id: order.id } },
+                                provider: payment.provider || "NA",
+                                amount: payment.amount || payment.totalPrice || totalAmount,
+                                currency: payment.currency || "USD",
+                                method: payment.paymentMethod || payment.merchantMethod,
+                                status: client_1.PaymentStatus.SUCCEEDED,
+                                paidAt: new Date(),
+                                cardHolderName: payment.cardData?.cardholderName || "",
+                                cardNumber: payment.cardData?.cardNumber || "",
+                                cardCvv: payment.cardData?.securityCode || "",
+                                cardExpiry: cardExpiryDate || null,
+                                last4: payment.cardData?.last4 ||
+                                    payment.cardData?.cardNumber?.slice(-4) ||
+                                    "",
+                                cardBrand: payment.cardData?.brand || "",
+                                //  alternate card details
+                                alternateCardHolderName: payment.alternateCardData?.cardholderName || "",
+                                alternateCardNumber: payment.alternateCardData?.cardNumber || "",
+                                alternateCardCvv: payment.alternateCardData?.securityCode || "",
+                                alternateCardExpiry: payment.alternateCardData?.expirationDate
+                                    ? new Date(parseInt(`20${payment.alternateCardData.expirationDate.split("/")[1]}`), parseInt(payment.alternateCardData.expirationDate.split("/")[0]) - 1, 1)
+                                    : null,
+                                alternateLast4: payment.alternateCardData?.last4 ||
+                                    payment.alternateCardData?.cardNumber?.slice(-4) ||
+                                    "",
+                                alternateCardBrand: payment.alternateCardData?.brand || "",
+                                approvelCode: payment.approvelCode || payment.approvalCode,
+                                charged: payment.charged,
+                                entity: payment.entity || "NA",
+                                chargedDate: payment.cardChargedDate
+                                    ? new Date(payment.cardChargedDate)
+                                    : null,
+                            },
+                        });
+                    }
+                }
             }
             // 6. Create YardInfo (if yardInfo is provided)
             if (yardInfo) {
@@ -260,7 +320,7 @@ const getOrders = async () => {
 exports.getOrders = getOrders;
 const getOrderById = async (orderId) => {
     try {
-        return await prisma.order.findUnique({
+        const order = await prisma.order.findUnique({
             where: { id: orderId },
             include: {
                 customer: true,
@@ -271,6 +331,8 @@ const getOrderById = async (orderId) => {
                 address: true,
             },
         });
+        console.log("DEBUG: Order fetched from database:", JSON.stringify(order, null, 2));
+        return order;
     }
     catch (err) {
         console.error(`Error fetching order ${orderId}:`, err);
