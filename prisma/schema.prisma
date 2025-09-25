@@ -118,6 +118,7 @@ model Order {
   customerNotes     Json?
   yardNotes         Json?
   notes             String?
+  internalNotes     String?
   vinNumber         String?
   orderDate         DateTime?
   

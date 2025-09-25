@@ -31,6 +31,7 @@ interface CreateOrderPayload {
   year?: number;
   saleMadeBy?: string;
   notes?: string;
+  internalNotes?: string;
   vinNumber?: string;
   orderDate?: Date | string;
   carrierName?: string;
@@ -86,6 +87,7 @@ export const createOrder = async (
       year,
       saleMadeBy,
       notes,
+      internalNotes,
       vinNumber,
       orderDate,
 
@@ -189,6 +191,7 @@ export const createOrder = async (
           source: source,
           status: status,
           subtotal: subtotal,
+          internalNotes: internalNotes,
           totalAmount: totalAmount,
           year: year ? parseInt(year.toString(), 10) : null,
           saleMadeBy,
@@ -343,66 +346,93 @@ export const createOrder = async (
         }
       }
 
-      // 5. Create Payment (if paymentInfo is provided)
-      if (paymentInfo && paymentInfo.cardData) {
-        const [expMonth, expYear] =
-          paymentInfo.cardData.expirationDate.split("/");
-        const cardExpiryDate = new Date(
-          parseInt(`20${expYear}`),
-          parseInt(expMonth) - 1,
-          1
+      // 5. Create Payments (if paymentInfo is provided)
+      if (paymentInfo) {
+        console.log(
+          "DEBUG: Payment Info received in orderService:",
+          paymentInfo
         );
+        // Handle multiple payment entries
+        const paymentsToCreate = Array.isArray(paymentInfo)
+          ? paymentInfo
+          : [paymentInfo];
+        console.log("DEBUG: Payments to create:", paymentsToCreate);
 
-        await tx.payment.create({
-          data: {
-            orderId: order.id,
-            provider: paymentInfo.provider || "NA",
-            amount: paymentInfo.amount || totalAmount,
-            currency: paymentInfo.currency || "USD",
-            method: paymentInfo.paymentMethod,
-            status: PaymentStatus.SUCCEEDED,
-            paidAt: new Date(),
-            cardHolderName: paymentInfo.cardData.cardholderName,
-            cardNumber: paymentInfo.cardData.cardNumber,
-            cardCvv: paymentInfo.cardData.securityCode,
-            cardExpiry: cardExpiryDate,
-            last4:
-              paymentInfo.cardData.last4 ||
-              paymentInfo.cardData.cardNumber?.slice(-4),
-            cardBrand: paymentInfo.cardData.brand,
+        for (const payment of paymentsToCreate) {
+          if (payment) {
+            console.log("DEBUG: Processing payment entry:", {
+              id: payment.id,
+              merchantMethod: payment.merchantMethod,
+              totalPrice: payment.totalPrice,
+              amount: payment.amount,
+              finalAmount: payment.amount || payment.totalPrice || totalAmount,
+            });
+            // Handle card data if provided
+            let cardExpiryDate = null;
+            if (payment.cardData && payment.cardData.expirationDate) {
+              const [expMonth, expYear] =
+                payment.cardData.expirationDate.split("/");
+              cardExpiryDate = new Date(
+                parseInt(`20${expYear}`),
+                parseInt(expMonth) - 1,
+                1
+              );
+            }
 
-            //  alternate card details
+            await tx.payment.create({
+              data: {
+                order: { connect: { id: order.id } },
+                provider: payment.provider || "NA",
+                amount: payment.amount || payment.totalPrice || totalAmount,
+                currency: payment.currency || "USD",
+                method: payment.paymentMethod || payment.merchantMethod,
+                status: PaymentStatus.SUCCEEDED,
+                paidAt: new Date(),
+                cardHolderName: payment.cardData?.cardholderName || "",
+                cardNumber: payment.cardData?.cardNumber || "",
+                cardCvv: payment.cardData?.securityCode || "",
+                cardExpiry: cardExpiryDate || null,
+                last4:
+                  payment.cardData?.last4 ||
+                  payment.cardData?.cardNumber?.slice(-4) ||
+                  "",
+                cardBrand: payment.cardData?.brand || "",
 
-            alternateCardHolderName:
-              paymentInfo.alternateCardData?.cardholderName,
-            alternateCardNumber: paymentInfo.alternateCardData?.cardNumber,
-            alternateCardCvv: paymentInfo.alternateCardData?.securityCode,
-            alternateCardExpiry: paymentInfo.alternateCardData?.expirationDate
-              ? new Date(
-                  parseInt(
-                    `20${
-                      paymentInfo.alternateCardData.expirationDate.split("/")[1]
-                    }`
-                  ),
-                  parseInt(
-                    paymentInfo.alternateCardData.expirationDate.split("/")[0]
-                  ) - 1,
-                  1
-                )
-              : null,
-            alternateLast4:
-              paymentInfo.alternateCardData?.last4 ||
-              paymentInfo.alternateCardData?.cardNumber?.slice(-4),
-            alternateCardBrand: paymentInfo.alternateCardData?.brand,
+                //  alternate card details
+                alternateCardHolderName:
+                  payment.alternateCardData?.cardholderName || "",
+                alternateCardNumber:
+                  payment.alternateCardData?.cardNumber || "",
+                alternateCardCvv: payment.alternateCardData?.securityCode || "",
+                alternateCardExpiry: payment.alternateCardData?.expirationDate
+                  ? new Date(
+                      parseInt(
+                        `20${
+                          payment.alternateCardData.expirationDate.split("/")[1]
+                        }`
+                      ),
+                      parseInt(
+                        payment.alternateCardData.expirationDate.split("/")[0]
+                      ) - 1,
+                      1
+                    )
+                  : null,
+                alternateLast4:
+                  payment.alternateCardData?.last4 ||
+                  payment.alternateCardData?.cardNumber?.slice(-4) ||
+                  "",
+                alternateCardBrand: payment.alternateCardData?.brand || "",
 
-            approvelCode: paymentInfo.approvelCode,
-            charged: paymentInfo.charged,
-            entity: paymentInfo.entity || "NA",
-            chargedDate: paymentInfo.cardChargedDate
-              ? new Date(paymentInfo.cardChargedDate)
-              : null,
-          } as any,
-        });
+                approvelCode: payment.approvelCode || payment.approvalCode,
+                charged: payment.charged,
+                entity: payment.entity || "NA",
+                chargedDate: payment.cardChargedDate
+                  ? new Date(payment.cardChargedDate)
+                  : null,
+              } as any,
+            });
+          }
+        }
       }
 
       // 6. Create YardInfo (if yardInfo is provided)
@@ -454,7 +484,7 @@ export const getOrders = async (): Promise<any> => {
 
 export const getOrderById = async (orderId: string): Promise<any> => {
   try {
-    return await prisma.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
         customer: true,
@@ -465,6 +495,11 @@ export const getOrderById = async (orderId: string): Promise<any> => {
         address: true,
       },
     });
+    console.log(
+      "DEBUG: Order fetched from database:",
+      JSON.stringify(order, null, 2)
+    );
+    return order;
   } catch (err) {
     console.error(`Error fetching order ${orderId}:`, err);
     throw err;
