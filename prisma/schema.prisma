@@ -180,7 +180,7 @@ model OrderItem {
   taxesPrice      Decimal?  @db.Decimal(18,2)
   handlingPrice   Decimal?  @db.Decimal(18,2)
   processingPrice Decimal?  @db.Decimal(18,2)
-  corePrice       Decimal?  @db.Decimal(18,2)
+  corePrice      Decimal?  @db.Decimal(18,2)
   
   // Metadata
   metadata        Json?
