@@ -125,6 +125,7 @@ model Order {
   // Shipping
   carrierName       String?
   trackingNumber    String?
+  estimatedDeliveryDate DateTime?
   
   // PO Information
   poStatus          String?

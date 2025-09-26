@@ -5,7 +5,7 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
     try {
-        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, internalNotes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, } = payload;
+        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, internalNotes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, estimatedDeliveryDate, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, yardHistory, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, } = payload;
         const mappedAddressType = typeof addressType === "string"
             ? client_1.AddressType[addressType.toUpperCase()]
             : addressType;
@@ -80,6 +80,9 @@ const createOrder = async (payload) => {
                     carrierName,
                     trackingNumber,
                     shippingAddress,
+                    ...(estimatedDeliveryDate && {
+                        estimatedDeliveryDate: new Date(estimatedDeliveryDate),
+                    }),
                     billingAddress,
                     companyName: companyName || shippingInfo.company || billingInfo.company || null,
                     billingSnapshot: billingInfo,
@@ -118,6 +121,35 @@ const createOrder = async (payload) => {
                     warranty: validWarranty,
                 },
             });
+            // Handle YardHistory Creation
+            if (yardHistory && Array.isArray(yardHistory)) {
+                for (const yard of yardHistory) {
+                    if (yard.yardName || yard.yardAddress) {
+                        // Only create if there's meaningful data
+                        await tx.yardHistory.create({
+                            data: {
+                                orderId: order.id,
+                                yardName: yard.yardName || null,
+                                attnName: yard.attnName || null,
+                                yardAddress: yard.yardAddress || "",
+                                yardMobile: yard.yardMobile || null,
+                                yardEmail: yard.yardEmail || null,
+                                yardPrice: yard.yardPrice || null,
+                                yardTaxesPrice: yard.yardTaxesPrice || null,
+                                yardHandlingFee: yard.yardHandlingFee || null,
+                                yardProcessingFee: yard.yardProcessingFee || null,
+                                yardCorePrice: yard.yardCorePrice || null,
+                                yardWarranty: yard.yardWarranty || null,
+                                yardMiles: yard.yardMiles || null,
+                                shipping: yard.shipping || null,
+                                yardCost: yard.yardCost || null,
+                                reason: yard.reason || null,
+                                yardCharge: yard.yardCharge || null,
+                            },
+                        });
+                    }
+                }
+            }
             // 4. Create Order Items
             console.log("DEBUG: Creating order items with cartItems:", JSON.stringify(cartItems, null, 2));
             if (cartItems && cartItems.length > 0) {
@@ -332,6 +364,21 @@ const getOrderById = async (orderId) => {
             },
         });
         console.log("DEBUG: Order fetched from database:", JSON.stringify(order, null, 2));
+        console.log("DEBUG: YardInfo from database:", order?.yardInfo);
+        if (order?.yardInfo) {
+            console.log("DEBUG: yardTaxesPrice:", order.yardInfo.yardTaxesPrice);
+            console.log("DEBUG: yardHandlingFee:", order.yardInfo.yardHandlingFee);
+            console.log("DEBUG: yardProcessingFee:", order.yardInfo.yardProcessingFee);
+            console.log("DEBUG: yardCorePrice:", order.yardInfo.yardCorePrice);
+        }
+        if (order?.yardHistory && order.yardHistory.length > 0) {
+            console.log("DEBUG: yardHistory:", order.yardHistory);
+            order.yardHistory.forEach((yard, index) => {
+                console.log(`DEBUG: Order yardHistory[${index}]:`, yard);
+                console.log(`DEBUG: yardHistory[${index}].yardTaxesPrice:`, yard.yardTaxesPrice);
+                console.log(`DEBUG: yardHistory[${index}].yardHandlingFee:`, yard.yardHandlingFee);
+            });
+        }
         return order;
     }
     catch (err) {

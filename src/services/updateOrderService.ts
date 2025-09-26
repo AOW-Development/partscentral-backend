@@ -25,6 +25,7 @@ export const updateOrder = async (
 
     const {
       yardInfo,
+      yardHistory,
       billingInfo,
       shippingInfo,
       customerInfo,
@@ -142,6 +143,32 @@ export const updateOrder = async (
 
     // 3. Handle YardInfo Upsert with explicit parsing
     if (yardInfo) {
+      console.log("DEBUG: Raw yardInfo being processed:", yardInfo);
+      console.log(
+        "DEBUG: yardTaxesPrice raw:",
+        yardInfo.yardTaxesPrice,
+        "type:",
+        typeof yardInfo.yardTaxesPrice
+      );
+      console.log(
+        "DEBUG: yardHandlingFee raw:",
+        yardInfo.yardHandlingFee,
+        "type:",
+        typeof yardInfo.yardHandlingFee
+      );
+      console.log(
+        "DEBUG: yardProcessingFee raw:",
+        yardInfo.yardProcessingFee,
+        "type:",
+        typeof yardInfo.yardProcessingFee
+      );
+      console.log(
+        "DEBUG: yardCorePrice raw:",
+        yardInfo.yardCorePrice,
+        "type:",
+        typeof yardInfo.yardCorePrice
+      );
+
       const dataForYardInfoUpdate: any = {
         yardName: yardInfo.yardName,
         yardAddress: yardInfo.yardAddress,
@@ -157,19 +184,18 @@ export const updateOrder = async (
       };
       if (yardInfo.yardWarranty) {
         const warrantyMap: { [key: string]: Warranty } = {
-          "30 DAYS": Warranty.WARRANTY_30_DAYS,
-          "60 DAYS": Warranty.WARRANTY_60_DAYS,
-          "90 DAYS": Warranty.WARRANTY_90_DAYS,
-          "6 MONTHS": Warranty.WARRANTY_6_MONTHS,
-          "1 YEAR": Warranty.WARRANTY_1_YEAR,
+          "30 Days": Warranty.WARRANTY_30_DAYS,
+          "60 Days": Warranty.WARRANTY_60_DAYS,
+          "90 Days": Warranty.WARRANTY_90_DAYS,
+          "6 Months": Warranty.WARRANTY_6_MONTHS,
+          "1 Year": Warranty.WARRANTY_1_YEAR,
         };
-        const upperWarranty = yardInfo.yardWarranty
-          .toUpperCase()
-          .replace(" ", "_");
-        if (warrantyMap[upperWarranty])
-          dataForYardInfoUpdate.yardWarranty = warrantyMap[upperWarranty];
-        else if (Object.values(Warranty).includes(upperWarranty as any))
-          dataForYardInfoUpdate.yardWarranty = upperWarranty;
+
+        if (warrantyMap[yardInfo.yardWarranty])
+          dataForYardInfoUpdate.yardWarranty =
+            warrantyMap[yardInfo.yardWarranty];
+        else if (Object.values(Warranty).includes(yardInfo.yardWarranty as any))
+          dataForYardInfoUpdate.yardWarranty = yardInfo.yardWarranty;
       }
 
       if (yardInfo.yardPrice !== undefined)
@@ -211,6 +237,60 @@ export const updateOrder = async (
         await tx.yardInfo.create({
           data: { orderId, ...dataForYardInfoUpdate },
         });
+      }
+    }
+
+    // Handle YardHistory Sync
+    if (yardHistory && Array.isArray(yardHistory)) {
+      // Delete existing yardHistory entries for this order
+      await tx.yardHistory.deleteMany({
+        where: { orderId },
+      });
+
+      // Create new yardHistory entries
+      for (const yard of yardHistory) {
+        if (yard.yardName || yard.yardAddress) {
+          // Only create if there's meaningful data
+
+          // Handle warranty conversion like in orderService
+          let processedWarranty = null;
+          if (yard.yardWarranty) {
+            const warrantyMap: { [key: string]: Warranty } = {
+              "30 Days": Warranty.WARRANTY_30_DAYS,
+              "60 Days": Warranty.WARRANTY_60_DAYS,
+              "90 Days": Warranty.WARRANTY_90_DAYS,
+              "6 Months": Warranty.WARRANTY_6_MONTHS,
+              "1 Year": Warranty.WARRANTY_1_YEAR,
+            };
+
+            if (warrantyMap[yard.yardWarranty])
+              processedWarranty = warrantyMap[yard.yardWarranty];
+            else if (Object.values(Warranty).includes(yard.yardWarranty as any))
+              processedWarranty = yard.yardWarranty;
+          }
+
+          await tx.yardHistory.create({
+            data: {
+              orderId,
+              yardName: yard.yardName || null,
+              attnName: yard.attnName || null,
+              yardAddress: yard.yardAddress || "",
+              yardMobile: yard.yardMobile || null,
+              yardEmail: yard.yardEmail || null,
+              yardPrice: yard.yardPrice || null,
+              yardTaxesPrice: yard.yardTaxesPrice || null,
+              yardHandlingFee: yard.yardHandlingFee || null,
+              yardProcessingFee: yard.yardProcessingFee || null,
+              yardCorePrice: yard.yardCorePrice || null,
+              yardWarranty: processedWarranty,
+              yardMiles: yard.yardMiles || null,
+              shipping: yard.shipping || null,
+              yardCost: yard.yardCost || null,
+              reason: yard.reason || null,
+              yardCharge: yard.yardCharge || null,
+            },
+          });
+        }
       }
     }
 
@@ -424,17 +504,17 @@ export const updateOrder = async (
     // 6. Prepare and Update Order
     if (updateData.warranty) {
       const warrantyMap: { [key: string]: Warranty } = {
-        "30 DAYS": Warranty.WARRANTY_30_DAYS,
-        "60 DAYS": Warranty.WARRANTY_60_DAYS,
-        "90 DAYS": Warranty.WARRANTY_90_DAYS,
-        "6 MONTHS": Warranty.WARRANTY_6_MONTHS,
-        "1 YEAR": Warranty.WARRANTY_1_YEAR,
+        "30 Days": Warranty.WARRANTY_30_DAYS,
+        "60 Days": Warranty.WARRANTY_60_DAYS,
+        "90 Days": Warranty.WARRANTY_90_DAYS,
+        "6 Months": Warranty.WARRANTY_6_MONTHS,
+        "1 Year": Warranty.WARRANTY_1_YEAR,
       };
-      const upperWarranty = updateData.warranty.toUpperCase().replace(" ", "_");
-      if (warrantyMap[upperWarranty])
-        updateData.warranty = warrantyMap[upperWarranty];
-      else if (Object.values(Warranty).includes(upperWarranty as any))
-        updateData.warranty = upperWarranty;
+
+      if (warrantyMap[updateData.warranty])
+        updateData.warranty = warrantyMap[updateData.warranty];
+      else if (Object.values(Warranty).includes(updateData.warranty as any))
+        updateData.warranty = updateData.warranty;
     }
     if (updateData.invoiceSentAt)
       updateData.invoiceSentAt = new Date(updateData.invoiceSentAt);
@@ -446,6 +526,10 @@ export const updateOrder = async (
       updateData.poConfirmAt = new Date(updateData.poConfirmAt);
     if (updateData.orderDate)
       updateData.orderDate = new Date(updateData.orderDate);
+    if (updateData.estimatedDeliveryDate)
+      updateData.estimatedDeliveryDate = new Date(
+        updateData.estimatedDeliveryDate
+      );
     if (billingInfo) updateData.billingSnapshot = billingInfo;
     if (shippingInfo) updateData.shippingSnapshot = shippingInfo;
     if (updateData.internalNotes !== undefined)
