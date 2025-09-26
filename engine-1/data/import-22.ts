@@ -143,6 +143,13 @@ async function importWorkbook(buffer: Buffer | ArrayBuffer) {
 
     
 // 8. Upsert ProductVariant
+// Helper function to clean price strings
+const cleanPrice = (price: any): number => {
+  if (price === null || price === undefined) return 0;
+  const str = String(price).replace(/[^0-9.]/g, '');
+  return str ? Number(str) : 0;
+};
+
 // 8. Upsert ProductVariant (Variant 1)
 const miles1 = row.miles ? String(row.miles).replace(/\s+/g, '').toUpperCase() : 'N/A';
 const variantSku1 = baseSku + '-' + miles1;
@@ -152,15 +159,15 @@ await prisma.productVariant_1.upsert({
     sku: variantSku1,
     productId: product.id,
     miles: row.miles ? String(row.miles) : null,
-    actualprice: Number(row.actualPrice),
-    discountedPrice: Number(row.discountedPrice),
+    actualprice: cleanPrice(row.actualPrice),
+    discountedPrice: cleanPrice(row.discountedPrice),
     inStock: row.inStock === 'Yes' || row.inStock === 'YES' || row.inStock === 'Part Available' || row.inStock === 'yes',
     // ...add other fields as needed
   },
   update: {
     miles: row.miles ? String(row.miles) : null,
-    actualprice: Number(row.actualPrice),
-    discountedPrice: Number(row.discountedPrice),
+    actualprice: cleanPrice(row.actualPrice),
+    discountedPrice: cleanPrice(row.discountedPrice),
     inStock: row.inStock === 'Yes' || row.inStock === 'YES' || row.inStock === 'Part Available' || row.inStock === 'yes',
     // ...add other fields as needed
   },
@@ -176,14 +183,14 @@ if (row.miles2 || row.actualPrice2 || row.discountedPrice2) {
       sku: variantSku2,
       productId: product.id,
       miles: row.miles2 ? String(row.miles2) : null,
-      actualprice: Number(row.actualPrice2),
-      discountedPrice: Number(row.discountedPrice2),
+      actualprice: cleanPrice(row.actualPrice2),
+      discountedPrice: cleanPrice(row.discountedPrice2),
       inStock: row.inStock === 'Yes' || row.inStock === 'YES' || row.inStock === 'Part Available' || row.inStock === 'yes',
     },
     update: {
       miles: row.miles2 ? String(row.miles2) : null,
-      actualprice: Number(row.actualPrice2),
-      discountedPrice: Number(row.discountedPrice2),
+      actualprice: cleanPrice(row.actualPrice2),
+      discountedPrice: cleanPrice(row.discountedPrice2),
       inStock: row.inStock === 'Yes' || row.inStock === 'YES' || row.inStock === 'Part Available' || row.inStock === 'yes',
     }
   });
