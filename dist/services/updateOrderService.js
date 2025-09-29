@@ -24,7 +24,7 @@ const updateOrder = async (orderId, data) => {
                 updateData.addressType = upperType;
             }
             else if (updateData.addressType === "Yet to Update") {
-                updateData.addressType = client_1.AddressType.YET_TO_UPDATE;
+                updateData.addressType = client_1.AddressType;
             }
         }
         if (updateData.status && typeof updateData.status === "string") {
@@ -87,7 +87,7 @@ const updateOrder = async (orderId, data) => {
                     mappedAddressType = upperType;
                 }
                 else if (addressType === "Yet to Update") {
-                    mappedAddressType = client_1.AddressType.YET_TO_UPDATE;
+                    mappedAddressType = client_1.AddressType;
                 }
                 else {
                     mappedAddressType = addressType;

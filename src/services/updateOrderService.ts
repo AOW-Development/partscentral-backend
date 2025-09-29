@@ -44,7 +44,7 @@ export const updateOrder = async (
       if (Object.values(AddressType).includes(upperType as any)) {
         updateData.addressType = upperType;
       } else if (updateData.addressType === "Yet to Update") {
-        updateData.addressType = AddressType.YET_TO_UPDATE;
+        updateData.addressType = AddressType;
       }
     }
     if (updateData.status && typeof updateData.status === "string") {
@@ -108,7 +108,7 @@ export const updateOrder = async (
         if (Object.values(AddressType).includes(upperType as any)) {
           mappedAddressType = upperType;
         } else if (addressType === "Yet to Update") {
-          mappedAddressType = AddressType.YET_TO_UPDATE;
+          mappedAddressType = AddressType;
         } else {
           mappedAddressType = addressType;
         }
