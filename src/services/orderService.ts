@@ -1,7 +1,13 @@
-import { PrismaClient, OrderSource, AddressType, PaymentStatus, OrderStatus ,Warranty} from '@prisma/client';
+import {
+  PrismaClient,
+  OrderSource,
+  AddressType,
+  PaymentStatus,
+  OrderStatus,
+  Warranty,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
-
 
 interface CreateOrderPayload {
   // Required fields
@@ -18,13 +24,14 @@ interface CreateOrderPayload {
   invoiceSentAt?: Date | string;
   invoiceStatus?: string;
   invoiceConfirmedAt?: Date | string;
-  
+
   // Order fields (matching schema)
   source?: string;
   status?: string;
   year?: number;
   saleMadeBy?: string;
   notes?: string;
+  internalNotes?: string;
   vinNumber?: string;
   orderDate?: Date | string;
   carrierName?: string;
@@ -33,7 +40,7 @@ interface CreateOrderPayload {
   yardNotes?: string | any;
   shippingAddress?: string;
   billingAddress?: string;
-  alternativePhone?: number ;
+  alternativePhone?: number;
   // Financial fields
   taxesAmount?: number;
   shippingAmount?: number;
@@ -41,28 +48,30 @@ interface CreateOrderPayload {
   processingFee?: number;
   corePrice?: number;
   milesPromised?: number;
-  
+
   // Address and company
   addressType?: AddressType;
   companyName?: string;
-  
+
   // PO Information
   poStatus?: string;
   poSentAt?: Date | string;
   poConfirmAt?: Date | string;
-  
+
   // Yard information
   yardInfo?: any;
-  
+
   // Warranty
   warranty?: string;
-  
+
   // Metadata
   metadata?: any;
   idempotencyKey?: string;
 }
 
-export const createOrder = async (payload: CreateOrderPayload): Promise<any> => {
+export const createOrder = async (
+  payload: CreateOrderPayload
+): Promise<any> => {
   try {
     const {
       billingInfo,
@@ -78,10 +87,11 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       year,
       saleMadeBy,
       notes,
+      internalNotes,
       vinNumber,
       orderDate,
 
-      alternativePhone ,
+      alternativePhone,
       carrierName,
       trackingNumber,
       customerNotes,
@@ -93,7 +103,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       handlingFee,
       processingFee,
       corePrice,
-      
+
       addressType,
       companyName,
       poStatus,
@@ -108,26 +118,29 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       warranty,
     } = payload;
 
-    const mappedAddressType = typeof addressType === 'string'
+    const mappedAddressType =
+      typeof addressType === "string"
         ? AddressType[addressType.toUpperCase() as keyof typeof AddressType]
         : addressType;
-        const warrantyMap: { [key: string]: Warranty } = {
-          '30 Days': Warranty.WARRANTY_30_DAYS,
-          '60 Days': Warranty.WARRANTY_60_DAYS,
-          '90 Days': Warranty.WARRANTY_90_DAYS,
-          '6 Months': Warranty.WARRANTY_6_MONTHS,
-          '1 Year': Warranty.WARRANTY_1_YEAR,
-        };
+    const warrantyMap: { [key: string]: Warranty } = {
+      "30 Days": Warranty.WARRANTY_30_DAYS,
+      "60 Days": Warranty.WARRANTY_60_DAYS,
+      "90 Days": Warranty.WARRANTY_90_DAYS,
+      "6 Months": Warranty.WARRANTY_6_MONTHS,
+      "1 Year": Warranty.WARRANTY_1_YEAR,
+    };
 
-        let validWarranty: Warranty;
-        if (warranty && warrantyMap[warranty]) {
-          validWarranty = warrantyMap[warranty];
-        } else if (warranty && Object.values(Warranty).includes(warranty as Warranty)) {
-          validWarranty = warranty as Warranty;
-        } else {
-          validWarranty = Warranty.WARRANTY_30_DAYS;
-        }
-
+    let validWarranty: Warranty;
+    if (warranty && warrantyMap[warranty]) {
+      validWarranty = warrantyMap[warranty];
+    } else if (
+      warranty &&
+      Object.values(Warranty).includes(warranty as Warranty)
+    ) {
+      validWarranty = warranty as Warranty;
+    } else {
+      validWarranty = Warranty.WARRANTY_30_DAYS;
+    }
 
     return prisma.$transaction(async (tx) => {
       // 1. Find or Create Customer
@@ -139,8 +152,14 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
         customer = await tx.customer.create({
           data: {
             email: customerInfo.email,
-            full_name: customerInfo.firstName,
-            alternativePhone: customerInfo.alternativePhone ? parseInt(customerInfo.alternativePhone.toString(), 10) : null,
+            full_name:
+              customerInfo.firstName ||
+              `${customerInfo.firstName || billingInfo.firstName} ${
+                customerInfo.lastName || billingInfo.lastName
+              }`,
+            alternativePhone: customerInfo.alternativePhone
+              ? customerInfo.alternativePhone.toString()
+              : null,
           },
         });
       } else if (customerInfo.alternativePhone) {
@@ -148,7 +167,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
         customer = await tx.customer.update({
           where: { id: customer.id },
           data: {
-            alternativePhone: parseInt(customerInfo.alternativePhone.toString(), 10),
+            alternativePhone: customerInfo.alternativePhone.toString(),
           },
         });
       }
@@ -159,7 +178,8 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           addressType: mappedAddressType || AddressType.RESIDENTIAL,
           shippingInfo: shippingInfo,
           billingInfo: billingInfo,
-          companyName: companyName || shippingInfo.company || billingInfo.company || null,
+          companyName:
+            companyName || shippingInfo.company || billingInfo.company || null,
         },
       });
 
@@ -168,9 +188,10 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
         data: {
           orderNumber,
           customerId: customer.id,
-          source: source ,
+          source: source,
           status: status,
           subtotal: subtotal,
+          internalNotes: internalNotes,
           totalAmount: totalAmount,
           year: year ? parseInt(year.toString(), 10) : null,
           saleMadeBy,
@@ -181,17 +202,30 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
           trackingNumber,
           shippingAddress,
           billingAddress,
-          companyName: companyName || shippingInfo.company || billingInfo.company || null,
+          companyName:
+            companyName || shippingInfo.company || billingInfo.company || null,
           billingSnapshot: billingInfo,
           shippingSnapshot: shippingInfo,
           addressId: newAddress.id,
           addressType: mappedAddressType || AddressType.RESIDENTIAL,
-          customerNotes: customerNotes ? (typeof customerNotes === 'string' ? JSON.parse(customerNotes) : customerNotes) : null,
-          yardNotes: yardNotes ? (typeof yardNotes === 'string' ? JSON.parse(yardNotes) : yardNotes) : null,
+          customerNotes: customerNotes
+            ? typeof customerNotes === "string"
+              ? JSON.parse(customerNotes)
+              : customerNotes
+            : null,
+          yardNotes: yardNotes
+            ? typeof yardNotes === "string"
+              ? JSON.parse(yardNotes)
+              : yardNotes
+            : null,
           taxesAmount: taxesAmount ? parseFloat(taxesAmount.toString()) : null,
-          shippingAmount: shippingAmount ? parseFloat(shippingAmount.toString()) : null,
+          shippingAmount: shippingAmount
+            ? parseFloat(shippingAmount.toString())
+            : null,
           handlingFee: handlingFee ? parseFloat(handlingFee.toString()) : null,
-          processingFee: processingFee ? parseFloat(processingFee.toString()) : null,
+          processingFee: processingFee
+            ? parseFloat(processingFee.toString())
+            : null,
           corePrice: corePrice ? parseFloat(corePrice.toString()) : null,
           poStatus,
           poSentAt: poSentAt ? new Date(poSentAt) : null,
@@ -201,104 +235,206 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
 
           invoiceSentAt: invoiceSentAt ? new Date(invoiceSentAt) : null,
           invoiceStatus: invoiceStatus || null,
-          invoiceConfirmedAt: invoiceConfirmedAt ? new Date(invoiceConfirmedAt) : null,
+          invoiceConfirmedAt: invoiceConfirmedAt
+            ? new Date(invoiceConfirmedAt)
+            : null,
           warranty: validWarranty,
         },
       });
 
       // 4. Create Order Items
+      console.log(
+        "DEBUG: Creating order items with cartItems:",
+        JSON.stringify(cartItems, null, 2)
+      );
       if (cartItems && cartItems.length > 0) {
         for (const item of cartItems) {
-          const productVariant = await tx.productVariant_1.findUnique({
-            where: { sku: item.id },
-            include: {
-              product: {
-                include: {
-                  modelYear: {
-                    include: {
-                      model: { include: { make: true } },
-                      year: true,
+          // Check if this is a manual item (no real product variant)
+          const isManualItem = item.id.startsWith("manual-");
+          console.log("DEBUG: Processing item:", { id: item.id, isManualItem });
+
+          let productVariant = null;
+          let product = null;
+          let makeName = "";
+          let modelName = "";
+          let yearName = "";
+          let partName = "";
+          let specification = "";
+
+          if (isManualItem) {
+            console.log("DEBUG: Processing as manual item");
+            // For manual items, extract info from the item name or use defaults
+            const nameParts = item.name.split(" ");
+            makeName = nameParts[0] || "Manual";
+            modelName = nameParts[1] || "Item";
+            yearName = nameParts[2] || "2024";
+            partName = nameParts.slice(3).join(" ") || "Part";
+            specification = item.specification || "";
+          } else {
+            console.log("DEBUG: Processing as real product variant");
+            // For real product variants, find the variant
+            productVariant = await tx.productVariant_1.findUnique({
+              where: { sku: item.id },
+              include: {
+                product: {
+                  include: {
+                    modelYear: {
+                      include: {
+                        model: { include: { make: true } },
+                        year: true,
+                      },
                     },
+                    partType: true,
                   },
-                  partType: true,
                 },
               },
-            },
-          });
+            });
 
-          if (!productVariant || !productVariant.product) {
-            throw new Error(`Product variant with SKU ${item.id} not found.`);
+            if (!productVariant || !productVariant.product) {
+              throw new Error(`Product variant with SKU ${item.id} not found.`);
+            }
+
+            product = productVariant.product;
+            makeName = product.modelYear.model.make.name;
+            modelName = product.modelYear.model.name;
+            yearName = product.modelYear.year.value;
+            partName = product.partType.name;
+            specification = product.description || "";
           }
 
-          const product = productVariant.product;
-          const makeName = product.modelYear.model.make.name;
-          const modelName = product.modelYear.model.name;
-          const yearName = product.modelYear.year.value;
-          const partName = product.partType.name;
-          const specification = product.description || '';
+          const orderItemData = {
+            orderId: order.id,
+            productVariantId: isManualItem ? null : productVariant?.id || null,
+            product_id: isManualItem ? null : product?.id || null,
+            sku: item.id,
+            quantity: item.quantity,
+            unitPrice: item.price,
+            lineTotal: item.price * item.quantity,
+            taxesPrice: item.taxesPrice
+              ? parseFloat(item.taxesPrice.toString())
+              : null,
+            handlingPrice: item.handlingPrice
+              ? parseFloat(item.handlingPrice.toString())
+              : null,
+            processingPrice: item.processingPrice
+              ? parseFloat(item.processingPrice.toString())
+              : null,
+            corePrice: item.corePrice
+              ? parseFloat(item.corePrice.toString())
+              : null,
+            makeName: makeName,
+            modelName: modelName,
+            yearName: yearName,
+            partName: partName,
+            specification: item.specification || specification,
+            milesPromised: item.milesPromised
+              ? parseFloat(item.milesPromised.toString())
+              : null,
+            pictureUrl: item.pictureUrl || null,
+            pictureStatus: item.pictureStatus || null,
+            // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
+          } as any;
+
+          console.log(
+            "DEBUG: Creating order item with data:",
+            JSON.stringify(orderItemData, null, 2)
+          );
 
           await tx.orderItem.create({
-            data: {
-              orderId: order.id,
-              productVariantId: productVariant.id,
-              product_id: product.id,
-              sku: productVariant.sku,
-              quantity: item.quantity,
-              unitPrice: item.price,
-              lineTotal: item.price * item.quantity,
-              makeName: makeName,
-              modelName: modelName,
-              yearName: yearName,
-              partName: partName,
-              specification: item.specification || specification,
-              milesPromised: item.milesPromised ? parseFloat(item.milesPromised.toString()) : null,
-              pictureUrl: item.pictureUrl || null,
-              pictureStatus: item.pictureStatus || null,
-              // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
-            },
+            data: orderItemData,
           });
         }
       }
 
-      // 5. Create Payment (if paymentInfo is provided)
-      if (paymentInfo && paymentInfo.cardData) {
-        const [expMonth, expYear] = paymentInfo.cardData.expirationDate.split('/');
-        const cardExpiryDate = new Date(parseInt(`20${expYear}`), parseInt(expMonth) - 1, 1);
+      // 5. Create Payments (if paymentInfo is provided)
+      if (paymentInfo) {
+        console.log(
+          "DEBUG: Payment Info received in orderService:",
+          paymentInfo
+        );
+        // Handle multiple payment entries
+        const paymentsToCreate = Array.isArray(paymentInfo)
+          ? paymentInfo
+          : [paymentInfo];
+        console.log("DEBUG: Payments to create:", paymentsToCreate);
 
-        await tx.payment.create({
-          data: {
-            orderId: order.id,
-            provider: paymentInfo.provider || 'NA',
-            amount: totalAmount,
-            currency: paymentInfo.currency || 'USD',
-            method: paymentInfo.paymentMethod,
-            status: PaymentStatus.SUCCEEDED,
-            paidAt: new Date(),
-            cardHolderName: paymentInfo.cardData.cardholderName,
-            cardNumber: paymentInfo.cardData.cardNumber,
-            cardCvv: paymentInfo.cardData.securityCode,
-            cardExpiry: cardExpiryDate,
-            last4: paymentInfo.cardData.last4 || paymentInfo.cardData.cardNumber?.slice(-4),
-            cardBrand: paymentInfo.cardData.brand,
+        for (const payment of paymentsToCreate) {
+          if (payment) {
+            console.log("DEBUG: Processing payment entry:", {
+              id: payment.id,
+              merchantMethod: payment.merchantMethod,
+              totalPrice: payment.totalPrice,
+              amount: payment.amount,
+              finalAmount: payment.amount || payment.totalPrice || totalAmount,
+            });
+            // Handle card data if provided
+            let cardExpiryDate = null;
+            if (payment.cardData && payment.cardData.expirationDate) {
+              const [expMonth, expYear] =
+                payment.cardData.expirationDate.split("/");
+              cardExpiryDate = new Date(
+                parseInt(`20${expYear}`),
+                parseInt(expMonth) - 1,
+                1
+              );
+            }
 
+            await tx.payment.create({
+              data: {
+                order: { connect: { id: order.id } },
+                provider: payment.provider || "NA",
+                amount: payment.amount || payment.totalPrice || totalAmount,
+                currency: payment.currency || "USD",
+                method: payment.paymentMethod || payment.merchantMethod,
+                status: PaymentStatus.SUCCEEDED,
+                paidAt: new Date(),
+                cardHolderName: payment.cardData?.cardholderName || "",
+                cardNumber: payment.cardData?.cardNumber || "",
+                cardCvv: payment.cardData?.securityCode || "",
+                cardExpiry: cardExpiryDate || null,
+                last4:
+                  payment.cardData?.last4 ||
+                  payment.cardData?.cardNumber?.slice(-4) ||
+                  "",
+                cardBrand: payment.cardData?.brand || "",
 
-            //  alternate card details 
+                //  alternate card details
+                alternateCardHolderName:
+                  payment.alternateCardData?.cardholderName || "",
+                alternateCardNumber:
+                  payment.alternateCardData?.cardNumber || "",
+                alternateCardCvv: payment.alternateCardData?.securityCode || "",
+                alternateCardExpiry: payment.alternateCardData?.expirationDate
+                  ? new Date(
+                      parseInt(
+                        `20${
+                          payment.alternateCardData.expirationDate.split("/")[1]
+                        }`
+                      ),
+                      parseInt(
+                        payment.alternateCardData.expirationDate.split("/")[0]
+                      ) - 1,
+                      1
+                    )
+                  : null,
+                alternateLast4:
+                  payment.alternateCardData?.last4 ||
+                  payment.alternateCardData?.cardNumber?.slice(-4) ||
+                  "",
+                alternateCardBrand: payment.alternateCardData?.brand || "",
 
-            alternateCardHolderName: paymentInfo.alternateCardData?.cardholderName,
-            alternateCardNumber: paymentInfo.alternateCardData?.cardNumber,
-            alternateCardCvv: paymentInfo.alternateCardData?.securityCode,
-            alternateCardExpiry: paymentInfo.alternateCardData?.expirationDate ? new Date(parseInt(`20${paymentInfo.alternateCardData.expirationDate.split('/')[1]}`), parseInt(paymentInfo.alternateCardData.expirationDate.split('/')[0]) - 1, 1) : null,
-            alternateLast4: paymentInfo.alternateCardData?.last4 || paymentInfo.alternateCardData?.cardNumber?.slice(-4),
-            alternateCardBrand: paymentInfo.alternateCardData?.brand,
-
-
-            approvelCode: paymentInfo.approvelCode,
-            charged: paymentInfo.charged,
-            entity: paymentInfo.entity || 'NA',
-          },
-        });
+                approvelCode: payment.approvelCode || payment.approvalCode,
+                charged: payment.charged,
+                entity: payment.entity || "NA",
+                chargedDate: payment.cardChargedDate
+                  ? new Date(payment.cardChargedDate)
+                  : null,
+              } as any,
+            });
+          }
+        }
       }
-      
+
       // 6. Create YardInfo (if yardInfo is provided)
       if (yardInfo) {
         await tx.yardInfo.create({
@@ -324,7 +460,7 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<any> => 
       return updatedOrder;
     });
   } catch (err) {
-    console.error('OrderService error:', err, payload);
+    console.error("OrderService error:", err, payload);
     throw err;
   }
 };
@@ -337,18 +473,18 @@ export const getOrders = async (): Promise<any> => {
         items: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   } catch (err) {
-    console.error('Error fetching orders:', err);
+    console.error("Error fetching orders:", err);
     throw err;
   }
 };
 
 export const getOrderById = async (orderId: string): Promise<any> => {
   try {
-    return await prisma.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
         customer: true,
@@ -359,6 +495,11 @@ export const getOrderById = async (orderId: string): Promise<any> => {
         address: true,
       },
     });
+    console.log(
+      "DEBUG: Order fetched from database:",
+      JSON.stringify(order, null, 2)
+    );
+    return order;
   } catch (err) {
     console.error(`Error fetching order ${orderId}:`, err);
     throw err;
@@ -373,24 +514,24 @@ export const deleteOrder = async (orderId: string): Promise<void> => {
       await tx.orderItem.deleteMany({
         where: { orderId },
       });
-      
+
       await tx.orderEvent.deleteMany({
         where: { orderId },
       });
-      
+
       await tx.payment.deleteMany({
         where: { orderId },
       });
-      
+
       await tx.yardHistory.deleteMany({
         where: { orderId },
       });
-      
+
       // Delete YardInfo (one-to-one relationship)
       await tx.yardInfo.deleteMany({
         where: { orderId },
       });
-      
+
       // Finally, delete the order itself
       await tx.order.delete({
         where: { id: orderId },
