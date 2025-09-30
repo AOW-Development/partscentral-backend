@@ -65,7 +65,7 @@ exports.getYearsForMakeModel = async (req, res) => {
             },
             distinct: ['modelYearId']
         });
-        const yearSet = new Set(years.map(y => y.modelYear.year.value));
+        const yearSet = new Set(years.map((y) => y.modelYear.year.value));
         res.json([...yearSet]);
     }
     catch (err) {

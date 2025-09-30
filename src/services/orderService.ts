@@ -64,6 +64,10 @@ interface CreateOrderPayload {
   // Warranty
   warranty?: string;
 
+  // Order Category Status
+  orderCategoryStatus?: string;
+  problematicIssueType?: string;
+
   // Metadata
   metadata?: any;
   idempotencyKey?: string;
@@ -116,6 +120,8 @@ export const createOrder = async (
       invoiceStatus,
       invoiceConfirmedAt,
       warranty,
+      orderCategoryStatus,
+      problematicIssueType,
     } = payload;
 
     const mappedAddressType =
@@ -239,6 +245,12 @@ export const createOrder = async (
             ? new Date(invoiceConfirmedAt)
             : null,
           warranty: validWarranty,
+          ...(orderCategoryStatus !== undefined
+            ? { orderCategoryStatus: orderCategoryStatus || null }
+            : {}),
+          ...(problematicIssueType !== undefined
+            ? { problematicIssueType: problematicIssueType || null }
+            : {}),
         },
       });
 

@@ -5,7 +5,7 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
     try {
-        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, internalNotes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, } = payload;
+        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, internalNotes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, orderCategoryStatus, problematicIssueType, } = payload;
         const mappedAddressType = typeof addressType === "string"
             ? client_1.AddressType[addressType.toUpperCase()]
             : addressType;
@@ -116,6 +116,12 @@ const createOrder = async (payload) => {
                         ? new Date(invoiceConfirmedAt)
                         : null,
                     warranty: validWarranty,
+                    ...(orderCategoryStatus !== undefined
+                        ? { orderCategoryStatus: orderCategoryStatus || null }
+                        : {}),
+                    ...(problematicIssueType !== undefined
+                        ? { problematicIssueType: problematicIssueType || null }
+                        : {}),
                 },
             });
             // 4. Create Order Items
