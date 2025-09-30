@@ -121,7 +121,6 @@ model Order {
   internalNotes     String?
   vinNumber         String?
   orderDate         DateTime?
-  internalNotes     String?
   
   // Shipping
   carrierName       String?
@@ -140,6 +139,10 @@ model Order {
   estimatedDeliveryDate DateTime? 
   // warranty 
   warranty          Warranty?
+
+  // Order Category Status
+  orderCategoryStatus String?
+  problematicIssueType String?
 
   
   // Timestamps
