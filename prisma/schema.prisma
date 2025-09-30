@@ -107,7 +107,7 @@ model Order {
   shippingSnapshot  Json?
   addressId         String?
   address           Address?    @relation(fields: [addressId], references: [id])
-  addressType       AddressType
+  addressType       String?
   companyName       String?
   shippingAddress   String?
   billingAddress    String?
@@ -121,6 +121,7 @@ model Order {
   internalNotes     String?
   vinNumber         String?
   orderDate         DateTime?
+  internalNotes     String?
   
   // Shipping
   carrierName       String?
@@ -136,9 +137,9 @@ model Order {
   invoiceSentAt     DateTime?
   invoiceConfirmedAt DateTime?
   invoiceStatus     String?
-  
- // warranty 
- warranty          Warranty?
+  estimatedDeliveryDate DateTime? 
+  // warranty 
+  warranty          Warranty?
 
   
   // Timestamps
@@ -287,7 +288,7 @@ model Inventory {
 
 model Address {
   id            String      @id @default(cuid())
-  addressType   AddressType
+  addressType   String?
   shippingInfo  Json?
   billingInfo   Json?
   companyName   String?
@@ -455,6 +456,7 @@ model ProductVariant_1 {
   product_img   String?
   description   String? @db.Text
   title         String?
+  specification String?
 
 }
 
