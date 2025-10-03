@@ -203,21 +203,21 @@ model Payment {
   orderId             String?
   
   // Payment Details
-  provider            String
+  provider            String?
   providerPaymentId   String?       @unique
   token               String?
   
   currency            String        @default("USD")
-  amount              Decimal       @db.Decimal(18,2)
+  amount              Decimal?       @db.Decimal(18,2)
   method              String?
   status              PaymentStatus @default(PENDING)
   paidAt              DateTime?
   
   // Card Details
-  cardHolderName      String
-  cardNumber          String
-  cardCvv             String
-  cardExpiry          DateTime
+  cardHolderName      String?
+  cardNumber          String?
+  cardCvv             String?
+  cardExpiry          DateTime?
   cardBrand           String?
   last4               String?
 
@@ -236,7 +236,7 @@ model Payment {
   chargedDate         DateTime?
 
   // Metadata
-  entity              String
+  entity              String?
   metadata            Json?
   
   // Timestamps

@@ -24,35 +24,34 @@ const createOrder = async (payload) => {
             Object.values(client_1.Warranty).includes(warranty)) {
             validWarranty = warranty;
         }
-        else {
-            validWarranty = client_1.Warranty.WARRANTY_30_DAYS;
-        }
+        // Convert address objects to strings
+        const shippingAddressStr = JSON.stringify(shippingInfo);
+        const billingAddressStr = JSON.stringify(billingInfo);
         return prisma.$transaction(async (tx) => {
             // 1. Find or Create Customer
-            let customer = await tx.customer.findUnique({
-                where: { email: customerInfo.email },
+            // let customer = await tx.customer.findUnique({
+            //   where: { email: customerInfo.email },
+            // });
+            // if (!customer) {
+            const customer = await tx.customer.create({
+                data: {
+                    email: customerInfo.email,
+                    full_name: customerInfo.firstName ||
+                        `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`,
+                    alternativePhone: customerInfo.alternativePhone
+                        ? customerInfo.alternativePhone.toString()
+                        : null,
+                },
             });
-            if (!customer) {
-                customer = await tx.customer.create({
-                    data: {
-                        email: customerInfo.email,
-                        full_name: customerInfo.firstName ||
-                            `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`,
-                        alternativePhone: customerInfo.alternativePhone
-                            ? customerInfo.alternativePhone.toString()
-                            : null,
-                    },
-                });
-            }
-            else if (customerInfo.alternativePhone) {
-                // Update existing customer with alternativePhone if provided
-                customer = await tx.customer.update({
-                    where: { id: customer.id },
-                    data: {
-                        alternativePhone: customerInfo.alternativePhone.toString(),
-                    },
-                });
-            }
+            // } else if (customerInfo.alternativePhone) {
+            //   // Update existing customer with alternativePhone if provided
+            //   customer = await tx.customer.update({
+            //     where: { id: customer.id },
+            //     data: {
+            //       alternativePhone: customerInfo.alternativePhone.toString(),
+            //     },
+            //   });
+            // }
             // 2. Create Address
             const newAddress = await tx.address.create({
                 data: {
@@ -79,8 +78,8 @@ const createOrder = async (payload) => {
                     orderDate: orderDate ? new Date(orderDate) : null,
                     carrierName,
                     trackingNumber,
-                    shippingAddress,
-                    billingAddress,
+                    shippingAddress: shippingAddressStr,
+                    billingAddress: billingAddressStr,
                     companyName: companyName || shippingInfo.company || billingInfo.company || null,
                     billingSnapshot: billingInfo,
                     shippingSnapshot: shippingInfo,
@@ -298,6 +297,9 @@ const createOrder = async (payload) => {
                 },
             });
             return updatedOrder;
+        }, {
+            maxWait: 30000,
+            timeout: 30000
         });
     }
     catch (err) {
@@ -371,6 +373,9 @@ const deleteOrder = async (orderId) => {
             await tx.order.delete({
                 where: { id: orderId },
             });
+        }, {
+            maxWait: 30000,
+            timeout: 30000
         });
     }
     catch (err) {

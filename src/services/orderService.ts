@@ -144,18 +144,21 @@ export const createOrder = async (
       Object.values(Warranty).includes(warranty as Warranty)
     ) {
       validWarranty = warranty as Warranty;
-    } else {
-      validWarranty = Warranty.WARRANTY_30_DAYS;
-    }
+    } 
 
+
+       // Convert address objects to strings
+       const shippingAddressStr = JSON.stringify(shippingInfo);
+       const billingAddressStr = JSON.stringify(billingInfo);
+    
     return prisma.$transaction(async (tx) => {
       // 1. Find or Create Customer
-      let customer = await tx.customer.findUnique({
-        where: { email: customerInfo.email },
-      });
+      // let customer = await tx.customer.findUnique({
+      //   where: { email: customerInfo.email },
+      // });
 
-      if (!customer) {
-        customer = await tx.customer.create({
+      // if (!customer) {
+        const customer = await tx.customer.create({
           data: {
             email: customerInfo.email,
             full_name:
@@ -168,15 +171,15 @@ export const createOrder = async (
               : null,
           },
         });
-      } else if (customerInfo.alternativePhone) {
-        // Update existing customer with alternativePhone if provided
-        customer = await tx.customer.update({
-          where: { id: customer.id },
-          data: {
-            alternativePhone: customerInfo.alternativePhone.toString(),
-          },
-        });
-      }
+      // } else if (customerInfo.alternativePhone) {
+      //   // Update existing customer with alternativePhone if provided
+      //   customer = await tx.customer.update({
+      //     where: { id: customer.id },
+      //     data: {
+      //       alternativePhone: customerInfo.alternativePhone.toString(),
+      //     },
+      //   });
+      // }
 
       // 2. Create Address
       const newAddress = await tx.address.create({
@@ -206,8 +209,8 @@ export const createOrder = async (
           orderDate: orderDate ? new Date(orderDate) : null,
           carrierName,
           trackingNumber,
-          shippingAddress,
-          billingAddress,
+          shippingAddress : shippingAddressStr ,
+          billingAddress : billingAddressStr,
           companyName:
             companyName || shippingInfo.company || billingInfo.company || null,
           billingSnapshot: billingInfo,
@@ -470,6 +473,9 @@ export const createOrder = async (
       });
 
       return updatedOrder;
+    }, {
+      maxWait: 30000,
+      timeout: 30000
     });
   } catch (err) {
     console.error("OrderService error:", err, payload);
@@ -548,6 +554,9 @@ export const deleteOrder = async (orderId: string): Promise<void> => {
       await tx.order.delete({
         where: { id: orderId },
       });
+    }, {
+      maxWait: 30000,
+      timeout: 30000
     });
   } catch (err) {
     console.error(`Error deleting order ${orderId}:`, err);
