@@ -333,6 +333,28 @@ const updateOrder = async (orderId, data) => {
             // Create new payments
             for (const payment of paymentsToProcess) {
                 if (payment) {
+                    // Skip payment creation if no meaningful payment information is provided
+                    const hasCardData = payment.cardData &&
+                        payment.cardData.cardNumber &&
+                        payment.cardData.cardNumber.trim() !== "";
+                    const hasAlternateCardData = payment.alternateCardData &&
+                        payment.alternateCardData.cardNumber &&
+                        payment.alternateCardData.cardNumber.trim() !== "";
+                    const hasPaymentMethod = (payment.paymentMethod && payment.paymentMethod.trim() !== "") ||
+                        (payment.merchantMethod && payment.merchantMethod.trim() !== "");
+                    console.log("DEBUG: Payment validation:", {
+                        hasCardData,
+                        hasAlternateCardData,
+                        hasPaymentMethod,
+                        cardData: payment.cardData,
+                        alternateCardData: payment.alternateCardData,
+                        paymentMethod: payment.paymentMethod,
+                        merchantMethod: payment.merchantMethod,
+                    });
+                    if (!hasCardData && !hasAlternateCardData && !hasPaymentMethod) {
+                        console.log("DEBUG: Skipping payment creation - no meaningful payment data provided");
+                        continue;
+                    }
                     const paymentData = {
                         provider: payment.provider || "NA",
                         amount: payment.amount !== undefined
