@@ -58,7 +58,7 @@ model Category {
 
 model Customer {
   id            Int       @id @default(autoincrement())
-  email         String    @unique
+  email         String    
   password_hash String?
   full_name     String
   created_at    DateTime  @default(now())
@@ -109,8 +109,8 @@ model Order {
   address           Address?    @relation(fields: [addressId], references: [id])
   addressType       String?
   companyName       String?
-  shippingAddress   String?
-  billingAddress    String?
+  shippingAddress   String? @db.VarChar(500)
+  billingAddress    String? @db.VarChar(500)
   
   // Metadata
   idempotencyKey    String?     @unique

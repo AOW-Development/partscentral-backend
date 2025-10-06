@@ -147,9 +147,9 @@ export const createOrder = async (
     } 
 
 
-       // Convert address objects to strings
-       const shippingAddressStr = JSON.stringify(shippingInfo);
-       const billingAddressStr = JSON.stringify(billingInfo);
+      //  // Convert address objects to strings
+      //  const shippingAddressStr = JSON.stringify(shippingInfo);
+      //  const billingAddressStr = JSON.stringify(billingInfo);
     
     return prisma.$transaction(async (tx) => {
       // 1. Find or Create Customer
@@ -209,8 +209,8 @@ export const createOrder = async (
           orderDate: orderDate ? new Date(orderDate) : null,
           carrierName,
           trackingNumber,
-          shippingAddress : shippingAddressStr ,
-          billingAddress : billingAddressStr,
+          shippingAddress  ,
+          billingAddress ,
           companyName:
             companyName || shippingInfo.company || billingInfo.company || null,
           billingSnapshot: billingInfo,
