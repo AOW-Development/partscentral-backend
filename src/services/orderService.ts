@@ -258,10 +258,10 @@ export const createOrder = async (
       });
 
       // 4. Create Order Items
-      console.log(
-        "DEBUG: Creating order items with cartItems:",
-        JSON.stringify(cartItems, null, 2)
-      );
+      // console.log(
+      //   "DEBUG: Creating order items with cartItems:",
+      //   JSON.stringify(cartItems, null, 2)
+      // );
       if (cartItems && cartItems.length > 0) {
         for (const item of cartItems) {
           // Check if this is a manual item (no real product variant)
@@ -576,7 +576,6 @@ export const deleteOrder = async (orderId: string): Promise<void> => {
         where: { orderId },
       });
 
-      // Delete YardInfo (one-to-one relationship)
       await tx.yardInfo.deleteMany({
         where: { orderId },
       });

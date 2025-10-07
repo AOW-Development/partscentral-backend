@@ -36,13 +36,13 @@ const register = async (req: Request & { body: RegisterBody }, res: Response) =>
   try {
     const { email, password, full_name } = req.body;
 
-    const existingUser = await prisma.customer.findUnique({
-      where: { email },
-    });
+    // const existingUser = await prisma.customer.findUnique({
+    //   where: { email },
+    // });
 
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already registered' });
-    }
+    // if (existingUser) {
+    //   return res.status(400).json({ message: 'Email already registered' });
+    // }
 
     const hashedPassword = await hash(password, 10);
     const otp = generateOTP();
@@ -72,7 +72,7 @@ const login = async (req: Request & { body: LoginBody }, res: Response) => {
   try {
     const { email, password, otp } = req.body;
 
-    const user = await prisma.customer.findUnique({
+    const user = await prisma.customer.findFirst({
       where: { email },
     });
 
@@ -119,8 +119,8 @@ const verifyOTP = async (req: Request & { body: VerifyOTPBody }, res: Response) 
   try {
     const { email, otp } = req.body;
 
-    const user = await prisma.customer.findUnique({
-      where: { email },
+    const user = await prisma.customer.findFirst({
+      where: { email},
     });
 
     if (!user || !user.otp || user.otp !== otp) {
@@ -190,7 +190,7 @@ const googleAuth = async (req: Request & { query?: { code?: string } }, res: Res
 
     const { email, name, picture } = userInfo.data as { email: string; name: string; picture: string };
 
-    let user = await prisma.customer.findUnique({
+    let user = await prisma.customer.findFirst({
       where: { email },
     });
 

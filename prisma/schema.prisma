@@ -117,10 +117,11 @@ model Order {
   metadata          Json?
   customerNotes     Json?
   yardNotes         Json?
-  notes             String?
   internalNotes     String?
-  vinNumber         String?
   orderDate         DateTime?
+
+  vinNumber         String?
+  notes             String?
   
   // Shipping
   carrierName       String?
@@ -192,6 +193,10 @@ model OrderItem {
   
   // Timestamps
   createdAt       DateTime  @default(now())
+
+  // notes and metadata
+  vinNumber         String?
+  notes             String?
   
   @@index([orderId])
   @@index([productVariantId])

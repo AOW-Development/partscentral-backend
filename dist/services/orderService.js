@@ -24,9 +24,9 @@ const createOrder = async (payload) => {
             Object.values(client_1.Warranty).includes(warranty)) {
             validWarranty = warranty;
         }
-        // Convert address objects to strings
-        const shippingAddressStr = JSON.stringify(shippingInfo);
-        const billingAddressStr = JSON.stringify(billingInfo);
+        //  // Convert address objects to strings
+        //  const shippingAddressStr = JSON.stringify(shippingInfo);
+        //  const billingAddressStr = JSON.stringify(billingInfo);
         return prisma.$transaction(async (tx) => {
             // 1. Find or Create Customer
             // let customer = await tx.customer.findUnique({
@@ -78,8 +78,8 @@ const createOrder = async (payload) => {
                     orderDate: orderDate ? new Date(orderDate) : null,
                     carrierName,
                     trackingNumber,
-                    shippingAddress: shippingAddressStr,
-                    billingAddress: billingAddressStr,
+                    shippingAddress,
+                    billingAddress,
                     companyName: companyName || shippingInfo.company || billingInfo.company || null,
                     billingSnapshot: billingInfo,
                     shippingSnapshot: shippingInfo,

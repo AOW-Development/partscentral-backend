@@ -17,12 +17,12 @@ prisma.$connect().catch((err) => {
 const register = async (req, res) => {
     try {
         const { email, password, full_name } = req.body;
-        const existingUser = await prisma.customer.findUnique({
-            where: { email },
-        });
-        if (existingUser) {
-            return res.status(400).json({ message: 'Email already registered' });
-        }
+        // const existingUser = await prisma.customer.findUnique({
+        //   where: { email },
+        // });
+        // if (existingUser) {
+        //   return res.status(400).json({ message: 'Email already registered' });
+        // }
         const hashedPassword = await (0, bcrypt_1.hash)(password, 10);
         const otp = (0, otp_1.generateOTP)();
         const user = await prisma.customer.create({
@@ -48,7 +48,7 @@ exports.register = register;
 const login = async (req, res) => {
     try {
         const { email, password, otp } = req.body;
-        const user = await prisma.customer.findUnique({
+        const user = await prisma.customer.findFirst({
             where: { email },
         });
         if (!user || !user.password_hash) {
@@ -85,7 +85,7 @@ exports.login = login;
 const verifyOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
-        const user = await prisma.customer.findUnique({
+        const user = await prisma.customer.findFirst({
             where: { email },
         });
         if (!user || !user.otp || user.otp !== otp) {
@@ -140,7 +140,7 @@ const googleAuth = async (req, res) => {
             url: 'https://www.googleapis.com/oauth2/v3/userinfo',
         });
         const { email, name, picture } = userInfo.data;
-        let user = await prisma.customer.findUnique({
+        let user = await prisma.customer.findFirst({
             where: { email },
         });
         if (!user) {
