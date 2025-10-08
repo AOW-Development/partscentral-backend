@@ -543,10 +543,10 @@ export const getOrderById = async (orderId: string): Promise<any> => {
         address: true,
       },
     });
-    console.log(
-      "DEBUG: Order fetched from database:",
-      JSON.stringify(order, null, 2)
-    );
+    // console.log(
+    //   "DEBUG: Order fetched from database:",
+    //   JSON.stringify(order, null, 2)
+    // );
     return order;
   } catch (err) {
     console.error(`Error fetching order ${orderId}:`, err);

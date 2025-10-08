@@ -5,7 +5,7 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
     try {
-        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, internalNotes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, orderCategoryStatus, problematicIssueType, } = payload;
+        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, internalNotes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, estimatedDeliveryDate, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, orderCategoryStatus, problematicIssueType, } = payload;
         const mappedAddressType = typeof addressType === "string"
             ? client_1.AddressType[addressType.toUpperCase()]
             : addressType;
@@ -79,6 +79,9 @@ const createOrder = async (payload) => {
                     orderDate: orderDate ? new Date(orderDate) : null,
                     carrierName,
                     trackingNumber,
+                    estimatedDeliveryDate: estimatedDeliveryDate
+                        ? new Date(estimatedDeliveryDate)
+                        : null,
                     shippingAddress,
                     billingAddress,
                     companyName: companyName || shippingInfo.company || billingInfo.company || null,
