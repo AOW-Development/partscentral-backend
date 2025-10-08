@@ -203,7 +203,7 @@ model Payment {
   orderId             String?
   
   // Payment Details
-  provider            String
+  provider            String?
   providerPaymentId   String?       @unique
   token               String?
   
@@ -214,10 +214,10 @@ model Payment {
   paidAt              DateTime?
   
   // Card Details
-  cardHolderName      String
-  cardNumber          String
-  cardCvv             String
-  cardExpiry          DateTime
+  cardHolderName      String?
+  cardNumber          String?
+  cardCvv             String?
+  cardExpiry          DateTime?
   cardBrand           String?
   last4               String?
 
@@ -236,7 +236,7 @@ model Payment {
   chargedDate         DateTime?
 
   // Metadata
-  entity              String
+  entity              String?
   metadata            Json?
   
   // Timestamps

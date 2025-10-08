@@ -36,6 +36,7 @@ interface CreateOrderPayload {
   orderDate?: Date | string;
   carrierName?: string;
   trackingNumber?: string;
+  estimatedDeliveryDate?: Date | string;
   customerNotes?: string | any;
   yardNotes?: string | any;
   shippingAddress?: string;
@@ -98,6 +99,7 @@ export const createOrder = async (
       alternativePhone,
       carrierName,
       trackingNumber,
+      estimatedDeliveryDate,
       customerNotes,
       yardNotes,
       shippingAddress,
@@ -206,6 +208,9 @@ export const createOrder = async (
           orderDate: orderDate ? new Date(orderDate) : null,
           carrierName,
           trackingNumber,
+          estimatedDeliveryDate: estimatedDeliveryDate
+            ? new Date(estimatedDeliveryDate)
+            : null,
           shippingAddress,
           billingAddress,
           companyName:
