@@ -6,6 +6,7 @@ import {
   Warranty,
   OrderStatus,
 } from "@prisma/client";
+import { is } from "zod/v4/locales";
 
 const prisma = new PrismaClient();
 
@@ -398,12 +399,14 @@ export const updateOrder = async (
             continue;
           }
 
+          const parsedAmount= payment.amount && isNaN(parseFloat(payment.amount)) ?  parseFloat(payment.amount):0 ;
           const paymentData: any = {
+            orderId,
             provider: payment.provider || "NA",
-            amount:
-              payment.amount !== undefined
-                ? parseFloat(payment.amount)
-                : parseFloat(orderData.totalAmount),
+            amount:parsedAmount,
+              // payment.amount !== undefined
+              //   ? parseFloat(payment.amount)
+              //   : parseFloat(orderData.totalAmount),
             currency: payment.currency || "USD",
             method: payment.paymentMethod || payment.merchantMethod,
             status: payment.status || "PENDING",
@@ -442,10 +445,10 @@ export const updateOrder = async (
           };
 
           await tx.payment.create({
-            data: {
-              order: { connect: { id: orderId } },
-              ...paymentData,
-            } as any,
+            // data: {
+            //   ...paymentData,
+            // } as any,
+            data: paymentData,
           });
         }
       }

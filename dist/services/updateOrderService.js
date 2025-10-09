@@ -355,11 +355,14 @@ const updateOrder = async (orderId, data) => {
                         console.log("DEBUG: Skipping payment creation - no meaningful payment data provided");
                         continue;
                     }
+                    const parsedAmount = payment.amount && isNaN(parseFloat(payment.amount)) ? parseFloat(payment.amount) : 0;
                     const paymentData = {
+                        orderId,
                         provider: payment.provider || "NA",
-                        amount: payment.amount !== undefined
-                            ? parseFloat(payment.amount)
-                            : parseFloat(orderData.totalAmount),
+                        amount: parsedAmount,
+                        // payment.amount !== undefined
+                        //   ? parseFloat(payment.amount)
+                        //   : parseFloat(orderData.totalAmount),
                         currency: payment.currency || "USD",
                         method: payment.paymentMethod || payment.merchantMethod,
                         status: payment.status || "PENDING",
@@ -394,10 +397,10 @@ const updateOrder = async (orderId, data) => {
                         alternateCardBrand: payment.alternateCardData?.brand || "",
                     };
                     await tx.payment.create({
-                        data: {
-                            order: { connect: { id: orderId } },
-                            ...paymentData,
-                        },
+                        // data: {
+                        //   ...paymentData,
+                        // } as any,
+                        data: paymentData,
                     });
                 }
             }

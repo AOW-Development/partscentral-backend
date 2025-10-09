@@ -362,7 +362,10 @@ const getOrderById = async (orderId) => {
                 address: true,
             },
         });
-        console.log("DEBUG: Order fetched from database:", JSON.stringify(order, null, 2));
+        // console.log(
+        //   "DEBUG: Order fetched from database:",
+        //   JSON.stringify(order, null, 2)
+        // );
         return order;
     }
     catch (err) {
