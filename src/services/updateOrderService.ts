@@ -56,49 +56,64 @@ export const updateOrder = async (
     }
 
     // 1. Handle Customer Update
-    if (customerInfo) {
-      if (
-        customerInfo.email &&
-        customerInfo.email !== existingOrder.customer.email
-      ) {
-        const newCustomer = await tx.customer.findUnique({
-          where: { email: customerInfo.email },
-        });
-        if (newCustomer) {
-          updateData.customerId = newCustomer.id;
-          await tx.customer.update({
-            where: { id: newCustomer.id },
-            data: {
-              full_name: customerInfo.firstName,
-              alternativePhone: customerInfo.alternativePhone
-                ? customerInfo.alternativePhone.toString()
-                : null,
-            },
-          });
-        } else {
-          await tx.customer.update({
-            where: { id: existingOrder.customerId },
-            data: {
-              email: customerInfo.email,
-              full_name: customerInfo.firstName,
-              alternativePhone: customerInfo.alternativePhone
-                ? customerInfo.alternativePhone.toString()
-                : null,
-            },
-          });
-        }
-      } else {
-        await tx.customer.update({
-          where: { id: existingOrder.customerId },
-          data: {
-            full_name: customerInfo.firstName,
-            alternativePhone: customerInfo.alternativePhone
-              ? customerInfo.alternativePhone.toString()
-              : null,
-          },
-        });
-      }
+    // if (customerInfo) {
+    //   if (
+    //     customerInfo.email &&
+    //     customerInfo.email !== existingOrder.customer.email
+    //   ) {
+    //     const newCustomer = await tx.customer.findUnique({
+    //       where: { email: customerInfo.email },
+    //     });
+    //     if (newCustomer) {
+    //       updateData.customerId = newCustomer.id;
+    //       await tx.customer.update({
+    //         where: { id: newCustomer.id },
+    //         data: {
+    //           full_name: customerInfo.firstName,
+    //           alternativePhone: customerInfo.alternativePhone
+    //             ? customerInfo.alternativePhone.toString()
+    //             : null,
+    //         },
+    //       });
+    //     } else {
+    //       await tx.customer.update({
+    //         where: { id: existingOrder.customerId },
+    //         data: {
+    //           email: customerInfo.email,
+    //           full_name: customerInfo.firstName,
+    //           alternativePhone: customerInfo.alternativePhone
+    //             ? customerInfo.alternativePhone.toString()
+    //             : null,
+    //         },
+    //       });
+    //     }
+    //   } else {
+    //     await tx.customer.update({
+    //       where: { id: existingOrder.customerId },
+    //       data: {
+    //         full_name: customerInfo.firstName,
+    //         alternativePhone: customerInfo.alternativePhone
+    //           ? customerInfo.alternativePhone.toString()
+    //           : null,
+    //       },
+    //     });
+    //   }
+    // }
+
+       if (customerInfo) {
+      // update email.
+      await tx.customer.update({
+        where: { id: existingOrder.customerId },
+        data: {
+          email: customerInfo.email || existingOrder.customer.email,
+          full_name: customerInfo.firstName,
+          alternativePhone: customerInfo.alternativePhone
+            ? customerInfo.alternativePhone.toString()
+            : null,
+        },
+      });
     }
+
 
     // 2. Handle Address Upsert
     if (billingInfo || shippingInfo) {
