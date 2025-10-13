@@ -34,48 +34,61 @@ const updateOrder = async (orderId, data) => {
             }
         }
         // 1. Handle Customer Update
+        // if (customerInfo) {
+        //   if (
+        //     customerInfo.email &&
+        //     customerInfo.email !== existingOrder.customer.email
+        //   ) {
+        //     const newCustomer = await tx.customer.findUnique({
+        //       where: { email: customerInfo.email },
+        //     });
+        //     if (newCustomer) {
+        //       updateData.customerId = newCustomer.id;
+        //       await tx.customer.update({
+        //         where: { id: newCustomer.id },
+        //         data: {
+        //           full_name: customerInfo.firstName,
+        //           alternativePhone: customerInfo.alternativePhone
+        //             ? customerInfo.alternativePhone.toString()
+        //             : null,
+        //         },
+        //       });
+        //     } else {
+        //       await tx.customer.update({
+        //         where: { id: existingOrder.customerId },
+        //         data: {
+        //           email: customerInfo.email,
+        //           full_name: customerInfo.firstName,
+        //           alternativePhone: customerInfo.alternativePhone
+        //             ? customerInfo.alternativePhone.toString()
+        //             : null,
+        //         },
+        //       });
+        //     }
+        //   } else {
+        //     await tx.customer.update({
+        //       where: { id: existingOrder.customerId },
+        //       data: {
+        //         full_name: customerInfo.firstName,
+        //         alternativePhone: customerInfo.alternativePhone
+        //           ? customerInfo.alternativePhone.toString()
+        //           : null,
+        //       },
+        //     });
+        //   }
+        // }
         if (customerInfo) {
-            if (customerInfo.email &&
-                customerInfo.email !== existingOrder.customer.email) {
-                const newCustomer = await tx.customer.findUnique({
-                    where: { email: customerInfo.email },
-                });
-                if (newCustomer) {
-                    updateData.customerId = newCustomer.id;
-                    await tx.customer.update({
-                        where: { id: newCustomer.id },
-                        data: {
-                            full_name: customerInfo.firstName,
-                            alternativePhone: customerInfo.alternativePhone
-                                ? customerInfo.alternativePhone.toString()
-                                : null,
-                        },
-                    });
-                }
-                else {
-                    await tx.customer.update({
-                        where: { id: existingOrder.customerId },
-                        data: {
-                            email: customerInfo.email,
-                            full_name: customerInfo.firstName,
-                            alternativePhone: customerInfo.alternativePhone
-                                ? customerInfo.alternativePhone.toString()
-                                : null,
-                        },
-                    });
-                }
-            }
-            else {
-                await tx.customer.update({
-                    where: { id: existingOrder.customerId },
-                    data: {
-                        full_name: customerInfo.firstName,
-                        alternativePhone: customerInfo.alternativePhone
-                            ? customerInfo.alternativePhone.toString()
-                            : null,
-                    },
-                });
-            }
+            // update email.
+            await tx.customer.update({
+                where: { id: existingOrder.customerId },
+                data: {
+                    email: customerInfo.email || existingOrder.customer.email,
+                    full_name: customerInfo.firstName,
+                    alternativePhone: customerInfo.alternativePhone
+                        ? customerInfo.alternativePhone.toString()
+                        : null,
+                },
+            });
         }
         // 2. Handle Address Upsert
         if (billingInfo || shippingInfo) {
@@ -356,11 +369,14 @@ const updateOrder = async (orderId, data) => {
                         console.log("DEBUG: Skipping payment - no meaningful payment data provided");
                         continue;
                     }
+                    const parsedAmount = payment.amount && isNaN(parseFloat(payment.amount)) ? parseFloat(payment.amount) : 0;
                     const paymentData = {
+                        orderId,
                         provider: payment.provider || "NA",
-                        amount: payment.amount !== undefined
-                            ? parseFloat(payment.amount)
-                            : parseFloat(orderData.totalAmount),
+                        amount: parsedAmount,
+                        // payment.amount !== undefined
+                        //   ? parseFloat(payment.amount)
+                        //   : parseFloat(orderData.totalAmount),
                         currency: payment.currency || "USD",
                         method: payment.paymentMethod || payment.merchantMethod || null,
                         status: payment.status || "PENDING",
@@ -394,6 +410,7 @@ const updateOrder = async (orderId, data) => {
                             null,
                         alternateCardBrand: payment.alternateCardData?.brand || null,
                     };
+<<<<<<< HEAD
                     // Check if we should update existing payment or create new one
                     const existingPayment = existingPayments[i];
                     if (existingPayment) {
@@ -421,6 +438,14 @@ const updateOrder = async (orderId, data) => {
                 const paymentsToDelete = existingPayments.slice(paymentsToProcess.length);
                 for (const paymentToDelete of paymentsToDelete) {
                     await tx.payment.delete({ where: { id: paymentToDelete.id } });
+=======
+                    await tx.payment.create({
+                        // data: {
+                        //   ...paymentData,
+                        // } as any,
+                        data: paymentData,
+                    });
+>>>>>>> 2e822dd77b91f43d599ec03d706cc5a17cc7d66c
                 }
             }
         }

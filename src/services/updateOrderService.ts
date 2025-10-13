@@ -7,6 +7,7 @@ import {
   OrderStatus,
   PaymentStatus,
 } from "@prisma/client";
+import { is } from "zod/v4/locales";
 
 const prisma = new PrismaClient();
 
@@ -56,49 +57,64 @@ export const updateOrder = async (
     }
 
     // 1. Handle Customer Update
-    if (customerInfo) {
-      if (
-        customerInfo.email &&
-        customerInfo.email !== existingOrder.customer.email
-      ) {
-        const newCustomer = await tx.customer.findUnique({
-          where: { email: customerInfo.email },
-        });
-        if (newCustomer) {
-          updateData.customerId = newCustomer.id;
-          await tx.customer.update({
-            where: { id: newCustomer.id },
-            data: {
-              full_name: customerInfo.firstName,
-              alternativePhone: customerInfo.alternativePhone
-                ? customerInfo.alternativePhone.toString()
-                : null,
-            },
-          });
-        } else {
-          await tx.customer.update({
-            where: { id: existingOrder.customerId },
-            data: {
-              email: customerInfo.email,
-              full_name: customerInfo.firstName,
-              alternativePhone: customerInfo.alternativePhone
-                ? customerInfo.alternativePhone.toString()
-                : null,
-            },
-          });
-        }
-      } else {
-        await tx.customer.update({
-          where: { id: existingOrder.customerId },
-          data: {
-            full_name: customerInfo.firstName,
-            alternativePhone: customerInfo.alternativePhone
-              ? customerInfo.alternativePhone.toString()
-              : null,
-          },
-        });
-      }
+    // if (customerInfo) {
+    //   if (
+    //     customerInfo.email &&
+    //     customerInfo.email !== existingOrder.customer.email
+    //   ) {
+    //     const newCustomer = await tx.customer.findUnique({
+    //       where: { email: customerInfo.email },
+    //     });
+    //     if (newCustomer) {
+    //       updateData.customerId = newCustomer.id;
+    //       await tx.customer.update({
+    //         where: { id: newCustomer.id },
+    //         data: {
+    //           full_name: customerInfo.firstName,
+    //           alternativePhone: customerInfo.alternativePhone
+    //             ? customerInfo.alternativePhone.toString()
+    //             : null,
+    //         },
+    //       });
+    //     } else {
+    //       await tx.customer.update({
+    //         where: { id: existingOrder.customerId },
+    //         data: {
+    //           email: customerInfo.email,
+    //           full_name: customerInfo.firstName,
+    //           alternativePhone: customerInfo.alternativePhone
+    //             ? customerInfo.alternativePhone.toString()
+    //             : null,
+    //         },
+    //       });
+    //     }
+    //   } else {
+    //     await tx.customer.update({
+    //       where: { id: existingOrder.customerId },
+    //       data: {
+    //         full_name: customerInfo.firstName,
+    //         alternativePhone: customerInfo.alternativePhone
+    //           ? customerInfo.alternativePhone.toString()
+    //           : null,
+    //       },
+    //     });
+    //   }
+    // }
+
+       if (customerInfo) {
+      // update email.
+      await tx.customer.update({
+        where: { id: existingOrder.customerId },
+        data: {
+          email: customerInfo.email || existingOrder.customer.email,
+          full_name: customerInfo.firstName,
+          alternativePhone: customerInfo.alternativePhone
+            ? customerInfo.alternativePhone.toString()
+            : null,
+        },
+      });
     }
+
 
     // 2. Handle Address Upsert
     if (billingInfo || shippingInfo) {
@@ -417,44 +433,17 @@ export const updateOrder = async (
             continue;
           }
 
-          // Map payment status to enum
-          let mappedStatus: PaymentStatus = PaymentStatus.PENDING;
-          if (payment.status) {
-            const upperStatus = payment.status.toUpperCase();
-            if (
-              Object.values(PaymentStatus).includes(
-                upperStatus as PaymentStatus
-              )
-            ) {
-              mappedStatus = upperStatus as PaymentStatus;
-            }
-          }
-
-          // Calculate amount with proper fallback
-          let paymentAmount = 0;
-          if (payment.amount !== undefined && payment.amount !== null) {
-            const parsedAmount = parseFloat(payment.amount.toString());
-            paymentAmount = isNaN(parsedAmount) ? 0 : parsedAmount;
-          } else if (
-            orderData.totalAmount !== undefined &&
-            orderData.totalAmount !== null
-          ) {
-            const parsedTotal = parseFloat(orderData.totalAmount.toString());
-            paymentAmount = isNaN(parsedTotal) ? 0 : parsedTotal;
-          } else {
-            // Fallback to existing order total
-            const existingTotal = parseFloat(
-              existingOrder.totalAmount.toString()
-            );
-            paymentAmount = isNaN(existingTotal) ? 0 : existingTotal;
-          }
-
+          const parsedAmount= payment.amount && isNaN(parseFloat(payment.amount)) ?  parseFloat(payment.amount):0 ;
           const paymentData: any = {
-            provider: payment.provider || null,
-            amount: paymentAmount,
+            orderId,
+            provider: payment.provider || "NA",
+            amount:parsedAmount,
+              // payment.amount !== undefined
+              //   ? parseFloat(payment.amount)
+              //   : parseFloat(orderData.totalAmount),
             currency: payment.currency || "USD",
             method: payment.paymentMethod || payment.merchantMethod || null,
-            status: mappedStatus,
+            status: payment.status || "PENDING",
             paidAt: payment.paidAt ? new Date(payment.paidAt) : null,
             approvelCode: payment.approvelCode || payment.approvalCode || null,
             charged: payment.charged || null,
@@ -485,43 +474,16 @@ export const updateOrder = async (
             alternateLast4:
               payment.alternateCardData?.last4 ||
               payment.alternateCardData?.cardNumber?.slice(-4) ||
-              null,
-            alternateCardBrand: payment.alternateCardData?.brand || null,
+              "",
+            alternateCardBrand: payment.alternateCardData?.brand || "",
           };
 
-          // Check if we should update existing payment or create new one
-          const existingPayment = existingPayments[i];
-
-          if (existingPayment) {
-            // Update existing payment
-            console.log(
-              "DEBUG: Updating existing payment:",
-              existingPayment.id
-            );
-            await tx.payment.update({
-              where: { id: existingPayment.id },
-              data: paymentData,
-            });
-          } else {
-            // Create new payment
-            console.log("DEBUG: Creating new payment for order:", orderId);
-            await tx.payment.create({
-              data: {
-                orderId: orderId,
-                ...paymentData,
-              } as any,
-            });
-          }
-        }
-      }
-
-      // Delete extra payments if the new list is shorter
-      if (existingPayments.length > paymentsToProcess.length) {
-        const paymentsToDelete = existingPayments.slice(
-          paymentsToProcess.length
-        );
-        for (const paymentToDelete of paymentsToDelete) {
-          await tx.payment.delete({ where: { id: paymentToDelete.id } });
+          await tx.payment.create({
+            // data: {
+            //   ...paymentData,
+            // } as any,
+            data: paymentData,
+          });
         }
       }
     }

@@ -6,7 +6,7 @@ import { generateOTP, sendOTPEmail } from '../utils/otp';
 import '../middlewares/authMiddleware'; // Import to ensure type declarations are loaded
 
 const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL!;
-console.log('→ GOOGLE_CALLBACK_URL:', CALLBACK_URL); 
+
 interface RegisterBody {
   email: string;
   password: string;
@@ -36,7 +36,7 @@ const register = async (req: Request & { body: RegisterBody }, res: Response) =>
   try {
     const { email, password, full_name } = req.body;
 
-    const existingUser = await prisma.customer.findUnique({
+    const existingUser = await prisma.customer.findFirst({
       where: { email },
     });
 
@@ -72,7 +72,7 @@ const login = async (req: Request & { body: LoginBody }, res: Response) => {
   try {
     const { email, password, otp } = req.body;
 
-    const user = await prisma.customer.findUnique({
+    const user = await prisma.customer.findFirst({
       where: { email },
     });
 
@@ -119,7 +119,7 @@ const verifyOTP = async (req: Request & { body: VerifyOTPBody }, res: Response) 
   try {
     const { email, otp } = req.body;
 
-    const user = await prisma.customer.findUnique({
+    const user = await prisma.customer.findFirst({
       where: { email },
     });
 
@@ -190,7 +190,7 @@ const googleAuth = async (req: Request & { query?: { code?: string } }, res: Res
 
     const { email, name, picture } = userInfo.data as { email: string; name: string; picture: string };
 
-    let user = await prisma.customer.findUnique({
+    let user = await prisma.customer.findFirst({
       where: { email },
     });
 

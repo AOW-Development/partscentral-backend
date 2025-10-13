@@ -7,7 +7,6 @@ const jsonwebtoken_1 = require("jsonwebtoken");
 const otp_1 = require("../utils/otp");
 require("../middlewares/authMiddleware"); // Import to ensure type declarations are loaded
 const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL;
-console.log('→ GOOGLE_CALLBACK_URL:', CALLBACK_URL);
 const prisma = new client_1.PrismaClient();
 // Ensure Prisma is properly initialized
 prisma.$connect().catch((err) => {
@@ -17,7 +16,7 @@ prisma.$connect().catch((err) => {
 const register = async (req, res) => {
     try {
         const { email, password, full_name } = req.body;
-        const existingUser = await prisma.customer.findUnique({
+        const existingUser = await prisma.customer.findFirst({
             where: { email },
         });
         if (existingUser) {
@@ -48,7 +47,7 @@ exports.register = register;
 const login = async (req, res) => {
     try {
         const { email, password, otp } = req.body;
-        const user = await prisma.customer.findUnique({
+        const user = await prisma.customer.findFirst({
             where: { email },
         });
         if (!user || !user.password_hash) {
@@ -85,7 +84,7 @@ exports.login = login;
 const verifyOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
-        const user = await prisma.customer.findUnique({
+        const user = await prisma.customer.findFirst({
             where: { email },
         });
         if (!user || !user.otp || user.otp !== otp) {
@@ -140,7 +139,7 @@ const googleAuth = async (req, res) => {
             url: 'https://www.googleapis.com/oauth2/v3/userinfo',
         });
         const { email, name, picture } = userInfo.data;
-        let user = await prisma.customer.findUnique({
+        let user = await prisma.customer.findFirst({
             where: { email },
         });
         if (!user) {

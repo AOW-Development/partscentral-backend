@@ -29,30 +29,42 @@ const createOrder = async (payload) => {
         }
         return prisma.$transaction(async (tx) => {
             // 1. Find or Create Customer
-            let customer = await tx.customer.findUnique({
-                where: { email: customerInfo.email },
+            // let customer = await tx.customer.findUnique({
+            //   where: { email: customerInfo.email },
+            // });
+            // if (!customer) {
+            //   customer = await tx.customer.create({
+            //     data: {
+            //       email: customerInfo.email,
+            //       full_name:
+            //         customerInfo.firstName ||
+            //         `${customerInfo.firstName || billingInfo.firstName} ${
+            //           customerInfo.lastName || billingInfo.lastName
+            //         }`,
+            //       alternativePhone: customerInfo.alternativePhone
+            //         ? customerInfo.alternativePhone.toString()
+            //         : null,
+            //     },
+            //   });
+            // } else if (customerInfo.alternativePhone) {
+            //   // Update existing customer with alternativePhone if provided
+            //   customer = await tx.customer.update({
+            //     where: { id: customer.id },
+            //     data: {
+            //       alternativePhone: customerInfo.alternativePhone.toString(),
+            //     },
+            //   });
+            // }
+            const customer = await tx.customer.create({
+                data: {
+                    email: customerInfo.email,
+                    full_name: customerInfo.firstName ||
+                        `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`,
+                    alternativePhone: customerInfo.alternativePhone
+                        ? customerInfo.alternativePhone.toString()
+                        : null,
+                },
             });
-            if (!customer) {
-                customer = await tx.customer.create({
-                    data: {
-                        email: customerInfo.email,
-                        full_name: customerInfo.firstName ||
-                            `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`,
-                        alternativePhone: customerInfo.alternativePhone
-                            ? customerInfo.alternativePhone.toString()
-                            : null,
-                    },
-                });
-            }
-            else if (customerInfo.alternativePhone) {
-                // Update existing customer with alternativePhone if provided
-                customer = await tx.customer.update({
-                    where: { id: customer.id },
-                    data: {
-                        alternativePhone: customerInfo.alternativePhone.toString(),
-                    },
-                });
-            }
             // 2. Create Address
             const newAddress = await tx.address.create({
                 data: {
@@ -362,7 +374,10 @@ const getOrderById = async (orderId) => {
                 address: true,
             },
         });
-        console.log("DEBUG: Order fetched from database:", JSON.stringify(order, null, 2));
+        // console.log(
+        //   "DEBUG: Order fetched from database:",
+        //   JSON.stringify(order, null, 2)
+        // );
         return order;
     }
     catch (err) {
