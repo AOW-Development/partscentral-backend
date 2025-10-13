@@ -347,7 +347,7 @@ const updateOrder = async (orderId, data) => {
             for (let i = 0; i < paymentsToProcess.length; i++) {
                 const payment = paymentsToProcess[i];
                 if (payment) {
-                    // Skip payment creation if no meaningful payment information is provided
+                    // Check if there's any meaningful payment information
                     const hasCardData = payment.cardData &&
                         payment.cardData.cardNumber &&
                         payment.cardData.cardNumber.trim() !== "";
@@ -356,17 +356,31 @@ const updateOrder = async (orderId, data) => {
                         payment.alternateCardData.cardNumber.trim() !== "";
                     const hasPaymentMethod = (payment.paymentMethod && payment.paymentMethod.trim() !== "") ||
                         (payment.merchantMethod && payment.merchantMethod.trim() !== "");
+                    const hasApprovalCode = (payment.approvelCode && payment.approvelCode.trim() !== "") ||
+                        (payment.approvalCode && payment.approvalCode.trim() !== "");
+                    const hasCharged = payment.charged && payment.charged.trim() !== "";
+                    const hasEntity = payment.entity && payment.entity.trim() !== "";
                     console.log("DEBUG: Payment validation:", {
                         hasCardData,
                         hasAlternateCardData,
                         hasPaymentMethod,
+                        hasApprovalCode,
+                        hasCharged,
+                        hasEntity,
                         cardData: payment.cardData,
                         alternateCardData: payment.alternateCardData,
                         paymentMethod: payment.paymentMethod,
                         merchantMethod: payment.merchantMethod,
                     });
-                    if (!hasCardData && !hasAlternateCardData && !hasPaymentMethod) {
-                        console.log("DEBUG: Skipping payment - no meaningful payment data provided");
+                    // Allow payment creation if ANY payment-related field has data
+                    if (!hasCardData &&
+                        !hasAlternateCardData &&
+                        !hasPaymentMethod &&
+                        !hasApprovalCode &&
+                        !hasCharged &&
+                        !hasEntity &&
+                        payment.amount === undefined) {
+                        console.log("DEBUG: Skipping payment - no payment data provided at all");
                         continue;
                     }
                     const parsedAmount = payment.amount && isNaN(parseFloat(payment.amount)) ? parseFloat(payment.amount) : 0;
@@ -380,7 +394,7 @@ const updateOrder = async (orderId, data) => {
                         currency: payment.currency || "USD",
                         method: payment.paymentMethod || payment.merchantMethod || null,
                         status: payment.status || "PENDING",
-                        paidAt: new Date(),
+                        paidAt: payment.paidAt ? new Date(payment.paidAt) : null,
                         approvelCode: payment.approvelCode || payment.approvalCode || null,
                         charged: payment.charged || null,
                         entity: payment.entity || null,
@@ -407,45 +421,15 @@ const updateOrder = async (orderId, data) => {
                             : null,
                         alternateLast4: payment.alternateCardData?.last4 ||
                             payment.alternateCardData?.cardNumber?.slice(-4) ||
-                            null,
-                        alternateCardBrand: payment.alternateCardData?.brand || null,
+                            "",
+                        alternateCardBrand: payment.alternateCardData?.brand || "",
                     };
-<<<<<<< HEAD
-                    // Check if we should update existing payment or create new one
-                    const existingPayment = existingPayments[i];
-                    if (existingPayment) {
-                        // Update existing payment
-                        console.log("DEBUG: Updating existing payment:", existingPayment.id);
-                        await tx.payment.update({
-                            where: { id: existingPayment.id },
-                            data: paymentData,
-                        });
-                    }
-                    else {
-                        // Create new payment
-                        console.log("DEBUG: Creating new payment for order:", orderId);
-                        await tx.payment.create({
-                            data: {
-                                order: { connect: { id: orderId } },
-                                ...paymentData,
-                            },
-                        });
-                    }
-                }
-            }
-            // Delete extra payments if the new list is shorter
-            if (existingPayments.length > paymentsToProcess.length) {
-                const paymentsToDelete = existingPayments.slice(paymentsToProcess.length);
-                for (const paymentToDelete of paymentsToDelete) {
-                    await tx.payment.delete({ where: { id: paymentToDelete.id } });
-=======
                     await tx.payment.create({
                         // data: {
                         //   ...paymentData,
                         // } as any,
                         data: paymentData,
                     });
->>>>>>> 2e822dd77b91f43d599ec03d706cc5a17cc7d66c
                 }
             }
         }

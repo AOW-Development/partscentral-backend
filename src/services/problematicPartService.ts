@@ -8,9 +8,9 @@ import {
 
 const prisma = new PrismaClient();
 
-// ======================================
+
 // TYPE DEFINITIONS
-// ======================================
+
 
 export interface CreateProblematicPartData {
   orderId: string;
@@ -88,9 +88,9 @@ export interface CreateReplacementData {
   metadata?: any;
 }
 
-// ======================================
+
 // HELPER FUNCTIONS
-// ======================================
+
 
 /**
  * Maps frontend problem type to Prisma enum
@@ -129,9 +129,9 @@ function calculateTotalBuy(replacement: CreateReplacementData): Prisma.Decimal {
   );
 }
 
-// ======================================
+
 // INTERNAL UPDATE FUNCTION (for transactions)
-// ======================================
+
 
 async function updateProblematicPartInternal(
   tx: any,
@@ -244,9 +244,9 @@ async function updateProblematicPartInternal(
   }) as Promise<ProblematicPart>;
 }
 
-// ======================================
+
 // CREATE PROBLEMATIC PART
-// ======================================
+
 
 export const createProblematicPart = async (
   data: CreateProblematicPartData
@@ -388,9 +388,9 @@ export const createProblematicPart = async (
   });
 };
 
-// ======================================
+
 // GET PROBLEMATIC PART BY ID
-// ======================================
+
 
 export const getProblematicPartById = async (
   id: string
@@ -408,9 +408,9 @@ export const getProblematicPartById = async (
   });
 };
 
-// ======================================
+
 // GET PROBLEMATIC PARTS BY ORDER ID
-// ======================================
+
 
 export const getProblematicPartsByOrderId = async (
   orderId: string
@@ -422,10 +422,8 @@ export const getProblematicPartsByOrderId = async (
   });
 };
 
-// ======================================
-// UPDATE PROBLEMATIC PART
-// ======================================
 
+// UPDATE PROBLEMATIC PART
 export const updateProblematicPart = async (
   id: string,
   data: Partial<CreateProblematicPartData>
@@ -445,10 +443,8 @@ export const updateProblematicPart = async (
   });
 };
 
-// ======================================
-// DELETE PROBLEMATIC PART
-// ======================================
 
+// DELETE PROBLEMATIC PART
 export const deleteProblematicPart = async (
   id: string
 ): Promise<ProblematicPart> => {
@@ -465,9 +461,9 @@ export const deleteProblematicPart = async (
   });
 };
 
-// ======================================
+
 // GET ALL PROBLEMATIC PARTS (with pagination)
-// ======================================
+
 
 export const getAllProblematicParts = async (params: {
   skip?: number;

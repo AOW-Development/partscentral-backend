@@ -10,9 +10,9 @@ import {
 } from "../services/problematicPartService";
 import { getIO } from "../utils/socket";
 
-// ======================================
+
 // CREATE PROBLEMATIC PART
-// ======================================
+
 
 export const createProblematicPart = async (req: Request, res: Response) => {
   try {
@@ -49,9 +49,9 @@ export const createProblematicPart = async (req: Request, res: Response) => {
   }
 };
 
-// ======================================
+
 // GET PROBLEMATIC PART BY ID
-// ======================================
+
 
 export const getProblematicPartById = async (req: Request, res: Response) => {
   try {
@@ -74,9 +74,9 @@ export const getProblematicPartById = async (req: Request, res: Response) => {
   }
 };
 
-// ======================================
+
 // GET PROBLEMATIC PARTS BY ORDER ID
-// ======================================
+
 
 export const getProblematicPartsByOrderId = async (
   req: Request,
@@ -102,9 +102,9 @@ export const getProblematicPartsByOrderId = async (
   }
 };
 
-// ======================================
+
 // GET ALL PROBLEMATIC PARTS (with pagination)
-// ======================================
+
 
 export const getAllProblematicParts = async (req: Request, res: Response) => {
   try {
@@ -134,9 +134,9 @@ export const getAllProblematicParts = async (req: Request, res: Response) => {
   }
 };
 
-// ======================================
+
 // UPDATE PROBLEMATIC PART
-// ======================================
+
 
 export const updateProblematicPart = async (req: Request, res: Response) => {
   try {
@@ -169,9 +169,9 @@ export const updateProblematicPart = async (req: Request, res: Response) => {
   }
 };
 
-// ======================================
+
 // DELETE PROBLEMATIC PART
-// ======================================
+
 
 export const deleteProblematicPart = async (req: Request, res: Response) => {
   try {

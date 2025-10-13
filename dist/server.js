@@ -12,12 +12,13 @@ const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const order_routes_1 = __importDefault(require("./routes/order.routes"));
 const leadRoutes_1 = __importDefault(require("./routes/leadRoutes"));
 const yardRoutes_1 = __importDefault(require("./routes/yardRoutes"));
+const problematicPart_routes_1 = __importDefault(require("./routes/problematicPart.routes"));
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
 const io = (0, socket_1.initSocket)(httpServer);
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:4000';
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const DASHBOARD_URL = process.env.DASHBOARD_URL || "http://localhost:4000";
 const WITH_WWW = process.env.WITH_WWW;
 const allowedOrigins = [FRONTEND_URL, DASHBOARD_URL, WITH_WWW];
 // Configure CORS with specific options
@@ -27,21 +28,22 @@ app.use((0, cors_1.default)({
             callback(null, true);
         }
         else {
-            console.log('CORS blocked for origin:', origin);
-            callback(new Error('Not allowed by CORS'));
+            console.log("CORS blocked for origin:", origin);
+            callback(new Error("Not allowed by CORS"));
         }
     },
     credentials: true, // Allow credentials (cookies, auth headers)
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
-    allowedHeaders: ['Content-Type', 'Authorization'] // Allowed headers
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
+    allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
 }));
-app.use(express_1.default.json({ limit: '50mb' }));
-app.use(express_1.default.urlencoded({ limit: '50mb', extended: true }));
-app.use('/api/products', productRoutes_1.default);
-app.use('/api/auth', authRoutes_1.default);
-app.use('/api/orders', order_routes_1.default);
-app.use('/api', leadRoutes_1.default);
-app.use('/api/yards', yardRoutes_1.default);
+app.use(express_1.default.json({ limit: "50mb" }));
+app.use(express_1.default.urlencoded({ limit: "50mb", extended: true }));
+app.use("/api/products", productRoutes_1.default);
+app.use("/api/auth", authRoutes_1.default);
+app.use("/api/orders", order_routes_1.default);
+app.use("/api", leadRoutes_1.default);
+app.use("/api/yards", yardRoutes_1.default);
+app.use("/api/problematic-parts", problematicPart_routes_1.default);
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
