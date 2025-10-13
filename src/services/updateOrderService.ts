@@ -5,6 +5,7 @@ import {
   AddressType,
   Warranty,
   OrderStatus,
+  PaymentStatus,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -360,15 +361,16 @@ export const updateOrder = async (
         return new Date(parseInt(`20${expYear}`), parseInt(expMonth) - 1, 1);
       };
 
-      // Delete existing payments first
-      await tx.payment.deleteMany({
+      // Get existing payments for this order
+      const existingPayments = await tx.payment.findMany({
         where: { orderId },
       });
 
-      // Create new payments
-      for (const payment of paymentsToProcess) {
+      // Process payments
+      for (let i = 0; i < paymentsToProcess.length; i++) {
+        const payment = paymentsToProcess[i];
         if (payment) {
-          // Skip payment creation if no meaningful payment information is provided
+          // Check if there's any meaningful payment information
           const hasCardData =
             payment.cardData &&
             payment.cardData.cardNumber &&
@@ -380,73 +382,146 @@ export const updateOrder = async (
           const hasPaymentMethod =
             (payment.paymentMethod && payment.paymentMethod.trim() !== "") ||
             (payment.merchantMethod && payment.merchantMethod.trim() !== "");
+          const hasApprovalCode =
+            (payment.approvelCode && payment.approvelCode.trim() !== "") ||
+            (payment.approvalCode && payment.approvalCode.trim() !== "");
+          const hasCharged = payment.charged && payment.charged.trim() !== "";
+          const hasEntity = payment.entity && payment.entity.trim() !== "";
 
           console.log("DEBUG: Payment validation:", {
             hasCardData,
             hasAlternateCardData,
             hasPaymentMethod,
+            hasApprovalCode,
+            hasCharged,
+            hasEntity,
             cardData: payment.cardData,
             alternateCardData: payment.alternateCardData,
             paymentMethod: payment.paymentMethod,
             merchantMethod: payment.merchantMethod,
           });
 
-          if (!hasCardData && !hasAlternateCardData && !hasPaymentMethod) {
+          // Allow payment creation if ANY payment-related field has data
+          if (
+            !hasCardData &&
+            !hasAlternateCardData &&
+            !hasPaymentMethod &&
+            !hasApprovalCode &&
+            !hasCharged &&
+            !hasEntity &&
+            payment.amount === undefined
+          ) {
             console.log(
-              "DEBUG: Skipping payment creation - no meaningful payment data provided"
+              "DEBUG: Skipping payment - no payment data provided at all"
             );
             continue;
           }
 
+          // Map payment status to enum
+          let mappedStatus: PaymentStatus = PaymentStatus.PENDING;
+          if (payment.status) {
+            const upperStatus = payment.status.toUpperCase();
+            if (
+              Object.values(PaymentStatus).includes(
+                upperStatus as PaymentStatus
+              )
+            ) {
+              mappedStatus = upperStatus as PaymentStatus;
+            }
+          }
+
+          // Calculate amount with proper fallback
+          let paymentAmount = 0;
+          if (payment.amount !== undefined && payment.amount !== null) {
+            const parsedAmount = parseFloat(payment.amount.toString());
+            paymentAmount = isNaN(parsedAmount) ? 0 : parsedAmount;
+          } else if (
+            orderData.totalAmount !== undefined &&
+            orderData.totalAmount !== null
+          ) {
+            const parsedTotal = parseFloat(orderData.totalAmount.toString());
+            paymentAmount = isNaN(parsedTotal) ? 0 : parsedTotal;
+          } else {
+            // Fallback to existing order total
+            const existingTotal = parseFloat(
+              existingOrder.totalAmount.toString()
+            );
+            paymentAmount = isNaN(existingTotal) ? 0 : existingTotal;
+          }
+
           const paymentData: any = {
-            provider: payment.provider || "NA",
-            amount:
-              payment.amount !== undefined
-                ? parseFloat(payment.amount)
-                : parseFloat(orderData.totalAmount),
+            provider: payment.provider || null,
+            amount: paymentAmount,
             currency: payment.currency || "USD",
-            method: payment.paymentMethod || payment.merchantMethod,
-            status: payment.status || "PENDING",
-            paidAt: new Date(),
-            approvelCode: payment.approvelCode || payment.approvalCode,
-            charged: payment.charged,
-            entity: payment.entity || "NA",
+            method: payment.paymentMethod || payment.merchantMethod || null,
+            status: mappedStatus,
+            paidAt: payment.paidAt ? new Date(payment.paidAt) : null,
+            approvelCode: payment.approvelCode || payment.approvalCode || null,
+            charged: payment.charged || null,
+            entity: payment.entity || null,
             chargedDate: payment.cardChargedDate
               ? new Date(payment.cardChargedDate)
               : null,
             // Card details with defaults
-            cardHolderName: payment.cardData?.cardholderName || "",
-            cardNumber: payment.cardData?.cardNumber || "",
-            cardCvv: payment.cardData?.securityCode || "",
+            cardHolderName: payment.cardData?.cardholderName || null,
+            cardNumber: payment.cardData?.cardNumber || null,
+            cardCvv: payment.cardData?.securityCode || null,
             cardExpiry: payment.cardData?.expirationDate
               ? getCardExpiry(payment.cardData.expirationDate)
-              : new Date(),
+              : null,
             last4:
               payment.cardData?.last4 ||
               payment.cardData?.cardNumber?.slice(-4) ||
-              "",
-            cardBrand: payment.cardData?.brand || "",
+              null,
+            cardBrand: payment.cardData?.brand || null,
             // Alternate card details with defaults
             alternateCardHolderName:
-              payment.alternateCardData?.cardholderName || "",
-            alternateCardNumber: payment.alternateCardData?.cardNumber || "",
-            alternateCardCvv: payment.alternateCardData?.securityCode || "",
+              payment.alternateCardData?.cardholderName || null,
+            alternateCardNumber: payment.alternateCardData?.cardNumber || null,
+            alternateCardCvv: payment.alternateCardData?.securityCode || null,
             alternateCardExpiry: payment.alternateCardData?.expirationDate
               ? getCardExpiry(payment.alternateCardData.expirationDate)
               : null,
             alternateLast4:
               payment.alternateCardData?.last4 ||
               payment.alternateCardData?.cardNumber?.slice(-4) ||
-              "",
-            alternateCardBrand: payment.alternateCardData?.brand || "",
+              null,
+            alternateCardBrand: payment.alternateCardData?.brand || null,
           };
 
-          await tx.payment.create({
-            data: {
-              order: { connect: { id: orderId } },
-              ...paymentData,
-            } as any,
-          });
+          // Check if we should update existing payment or create new one
+          const existingPayment = existingPayments[i];
+
+          if (existingPayment) {
+            // Update existing payment
+            console.log(
+              "DEBUG: Updating existing payment:",
+              existingPayment.id
+            );
+            await tx.payment.update({
+              where: { id: existingPayment.id },
+              data: paymentData,
+            });
+          } else {
+            // Create new payment
+            console.log("DEBUG: Creating new payment for order:", orderId);
+            await tx.payment.create({
+              data: {
+                orderId: orderId,
+                ...paymentData,
+              } as any,
+            });
+          }
+        }
+      }
+
+      // Delete extra payments if the new list is shorter
+      if (existingPayments.length > paymentsToProcess.length) {
+        const paymentsToDelete = existingPayments.slice(
+          paymentsToProcess.length
+        );
+        for (const paymentToDelete of paymentsToDelete) {
+          await tx.payment.delete({ where: { id: paymentToDelete.id } });
         }
       }
     }

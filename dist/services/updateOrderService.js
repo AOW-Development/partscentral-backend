@@ -326,12 +326,13 @@ const updateOrder = async (orderId, data) => {
                 const [expMonth, expYear] = dateStr.split("/");
                 return new Date(parseInt(`20${expYear}`), parseInt(expMonth) - 1, 1);
             };
-            // Delete existing payments first
-            await tx.payment.deleteMany({
+            // Get existing payments for this order
+            const existingPayments = await tx.payment.findMany({
                 where: { orderId },
             });
-            // Create new payments
-            for (const payment of paymentsToProcess) {
+            // Process payments
+            for (let i = 0; i < paymentsToProcess.length; i++) {
+                const payment = paymentsToProcess[i];
                 if (payment) {
                     // Skip payment creation if no meaningful payment information is provided
                     const hasCardData = payment.cardData &&
@@ -352,7 +353,7 @@ const updateOrder = async (orderId, data) => {
                         merchantMethod: payment.merchantMethod,
                     });
                     if (!hasCardData && !hasAlternateCardData && !hasPaymentMethod) {
-                        console.log("DEBUG: Skipping payment creation - no meaningful payment data provided");
+                        console.log("DEBUG: Skipping payment - no meaningful payment data provided");
                         continue;
                     }
                     const paymentData = {
@@ -361,44 +362,65 @@ const updateOrder = async (orderId, data) => {
                             ? parseFloat(payment.amount)
                             : parseFloat(orderData.totalAmount),
                         currency: payment.currency || "USD",
-                        method: payment.paymentMethod || payment.merchantMethod,
+                        method: payment.paymentMethod || payment.merchantMethod || null,
                         status: payment.status || "PENDING",
                         paidAt: new Date(),
-                        approvelCode: payment.approvelCode || payment.approvalCode,
-                        charged: payment.charged,
-                        entity: payment.entity || "NA",
+                        approvelCode: payment.approvelCode || payment.approvalCode || null,
+                        charged: payment.charged || null,
+                        entity: payment.entity || null,
                         chargedDate: payment.cardChargedDate
                             ? new Date(payment.cardChargedDate)
                             : null,
                         // Card details with defaults
-                        cardHolderName: payment.cardData?.cardholderName || "",
-                        cardNumber: payment.cardData?.cardNumber || "",
-                        cardCvv: payment.cardData?.securityCode || "",
+                        cardHolderName: payment.cardData?.cardholderName || null,
+                        cardNumber: payment.cardData?.cardNumber || null,
+                        cardCvv: payment.cardData?.securityCode || null,
                         cardExpiry: payment.cardData?.expirationDate
                             ? getCardExpiry(payment.cardData.expirationDate)
-                            : new Date(),
+                            : null,
                         last4: payment.cardData?.last4 ||
                             payment.cardData?.cardNumber?.slice(-4) ||
-                            "",
-                        cardBrand: payment.cardData?.brand || "",
+                            null,
+                        cardBrand: payment.cardData?.brand || null,
                         // Alternate card details with defaults
-                        alternateCardHolderName: payment.alternateCardData?.cardholderName || "",
-                        alternateCardNumber: payment.alternateCardData?.cardNumber || "",
-                        alternateCardCvv: payment.alternateCardData?.securityCode || "",
+                        alternateCardHolderName: payment.alternateCardData?.cardholderName || null,
+                        alternateCardNumber: payment.alternateCardData?.cardNumber || null,
+                        alternateCardCvv: payment.alternateCardData?.securityCode || null,
                         alternateCardExpiry: payment.alternateCardData?.expirationDate
                             ? getCardExpiry(payment.alternateCardData.expirationDate)
                             : null,
                         alternateLast4: payment.alternateCardData?.last4 ||
                             payment.alternateCardData?.cardNumber?.slice(-4) ||
-                            "",
-                        alternateCardBrand: payment.alternateCardData?.brand || "",
+                            null,
+                        alternateCardBrand: payment.alternateCardData?.brand || null,
                     };
-                    await tx.payment.create({
-                        data: {
-                            order: { connect: { id: orderId } },
-                            ...paymentData,
-                        },
-                    });
+                    // Check if we should update existing payment or create new one
+                    const existingPayment = existingPayments[i];
+                    if (existingPayment) {
+                        // Update existing payment
+                        console.log("DEBUG: Updating existing payment:", existingPayment.id);
+                        await tx.payment.update({
+                            where: { id: existingPayment.id },
+                            data: paymentData,
+                        });
+                    }
+                    else {
+                        // Create new payment
+                        console.log("DEBUG: Creating new payment for order:", orderId);
+                        await tx.payment.create({
+                            data: {
+                                order: { connect: { id: orderId } },
+                                ...paymentData,
+                            },
+                        });
+                    }
+                }
+            }
+            // Delete extra payments if the new list is shorter
+            if (existingPayments.length > paymentsToProcess.length) {
+                const paymentsToDelete = existingPayments.slice(paymentsToProcess.length);
+                for (const paymentToDelete of paymentsToDelete) {
+                    await tx.payment.delete({ where: { id: paymentToDelete.id } });
                 }
             }
         }
