@@ -149,6 +149,10 @@ model Order {
   // Timestamps
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
+
+  // Media
+  pictureStatus   String?
+  pictureUrl      String? 
   
   @@index([createdAt])
   @@index([status])
