@@ -1,6 +1,9 @@
-const express = require('express');
+import express, {Request,Response,NextFunction} from 'express';
+import { FileFilterCallback } from 'multer';
+import { any } from 'zod';
 const multer = require('multer');
-const { uploadToS3, uploadMultipleToS3, deleteFromS3, getPresignedUrl } = require('../../lib/s3');
+// import { NextRequest, NextResponse } from 'next
+const { uploadToS3, uploadMultipleToS3, deleteFromS3, getPresignedUrl } = require('../lib/awsS3Connect');
 
 const router = express.Router();
 
@@ -11,7 +14,7 @@ const upload = multer({
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
     // Allow images and PDFs
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
     
@@ -55,7 +58,7 @@ router.post('/upload-single', upload.single('file'), async (req, res) => {
     console.error('Upload error:', error);
     res.status(500).json({ 
       error: 'Upload failed', 
-      message: error.message 
+      message: (error as Error).message 
     });
   }
 });
@@ -67,7 +70,8 @@ router.post('/upload-multiple', upload.array('files', 10), async (req, res) => {
       return res.status(400).json({ error: 'No files uploaded' });
     }
 
-    const filesData = req.files.map(file => {
+    const filesArray = req.files as Express.Multer.File[];
+    const filesData = filesArray.map(file => {
       let folder = 'others';
       if (file.mimetype.startsWith('image/')) {
         folder = 'images';
@@ -84,7 +88,7 @@ router.post('/upload-multiple', upload.array('files', 10), async (req, res) => {
     });
 
     const uploadResults = await Promise.all(
-      filesData.map(file => 
+      filesData.map((file: { buffer: any; filename: any; mimetype: any; folder: any; }) => 
         uploadToS3(file.buffer, file.filename, file.mimetype, file.folder)
       )
     );
@@ -99,17 +103,16 @@ router.post('/upload-multiple', upload.array('files', 10), async (req, res) => {
     console.error('Upload error:', error);
     res.status(500).json({ 
       error: 'Upload failed', 
-      message: error.message 
+      message: (error as Error).message 
     });
   }
 });
 
 // Get presigned URL for file access
-router.get('/presigned-url/:key(*)', async (req, res) => {
+router.get(/^\/presigned-url\/(.+)/, async (req, res) => {
   try {
-    const key = req.params.key;
-    const expiresIn = parseInt(req.query.expiresIn) || 3600; // Default 1 hour
-
+    const key = (req.params as any )[0];
+    const expiresIn = parseInt( typeof req.query.expiresIn === 'string' ? req.query.expiresIn : '3600'); // Default 1 hour
     const url = await getPresignedUrl(key, expiresIn);
 
     res.status(200).json({
@@ -122,15 +125,15 @@ router.get('/presigned-url/:key(*)', async (req, res) => {
     console.error('Presigned URL error:', error);
     res.status(500).json({ 
       error: 'Failed to generate URL', 
-      message: error.message 
+      message: (error as Error).message 
     });
   }
 });
 
 // Delete file from S3
-router.delete('/delete/:key(*)', async (req, res) => {
+router.delete(/^\/delete\/(.+)/, async (req, res) => {
   try {
-    const key = req.params.key;
+    const key = (req.params as any )[0];
 
     const result = await deleteFromS3(key);
 
@@ -143,21 +146,22 @@ router.delete('/delete/:key(*)', async (req, res) => {
     console.error('Delete error:', error);
     res.status(500).json({ 
       error: 'Delete failed', 
-      message: error.message 
+      message: (error as Error).message 
     });
   }
 });
 
 // Error handling middleware
-router.use((error, req, res, next) => {
+router.use((error : Error , req : Request, res : Response, next:NextFunction) => {
   if (error instanceof multer.MulterError) {
-    if (error.code === 'LIMIT_FILE_SIZE') {
+    const code = (error as any).code
+    if (code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         error: 'File too large',
         message: 'File size should not exceed 50MB',
       });
     }
-    if (error.code === 'LIMIT_FILE_COUNT') {
+    if (code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({
         error: 'Too many files',
         message: 'Maximum 10 files allowed',
