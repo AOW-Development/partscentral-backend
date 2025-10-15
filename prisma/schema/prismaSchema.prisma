@@ -171,9 +171,7 @@ model OrderItem {
   specification   String
   milesPromised   Decimal?  @db.Decimal(18,2)
   
-  // Media
-  pictureStatus   String?
-  pictureUrl      String? @db.LongText
+  
   
   // Product Reference
   productVariant  ProductVariant_1? @relation(fields: [productVariantId], references: [id])
