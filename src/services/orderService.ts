@@ -72,6 +72,9 @@ interface CreateOrderPayload {
   // Metadata
   metadata?: any;
   idempotencyKey?: string;
+
+  pictureUrl?: string;
+  pictureStatus?: string;
 }
 
 export const createOrder = async (
@@ -124,6 +127,8 @@ export const createOrder = async (
       warranty,
       orderCategoryStatus,
       problematicIssueType,
+      pictureUrl,
+      pictureStatus,
     } = payload;
 
     const mappedAddressType =
@@ -259,6 +264,9 @@ export const createOrder = async (
           metadata: metadata || null,
           idempotencyKey: idempotencyKey || null,
 
+          pictureUrl: pictureUrl || null,
+          pictureStatus: pictureStatus || null,
+
           invoiceSentAt: invoiceSentAt ? new Date(invoiceSentAt) : null,
           invoiceStatus: invoiceStatus || null,
           invoiceConfirmedAt: invoiceConfirmedAt
@@ -362,8 +370,8 @@ export const createOrder = async (
             milesPromised: item.milesPromised
               ? parseFloat(item.milesPromised.toString())
               : null,
-            pictureUrl: item.pictureUrl || null,
-            pictureStatus: item.pictureStatus || null,
+            // pictureUrl: item.pictureUrl || null,
+            // pictureStatus: item.pictureStatus || null,
             // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
           } as any;
 

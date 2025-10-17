@@ -262,8 +262,8 @@ export const updateOrder = async (
               milesPromised: item.milesPromised
                 ? parseFloat(item.milesPromised.toString())
                 : null,
-              pictureUrl: item.pictureUrl || existingItem.pictureUrl,
-              pictureStatus: item.pictureStatus || existingItem.pictureStatus,
+              // pictureUrl: item.pictureUrl || existingItem.pictureUrl,
+              // pictureStatus: item.pictureStatus || existingItem.pictureStatus,
             } as any,
           });
         } else {
