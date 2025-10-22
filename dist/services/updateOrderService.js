@@ -233,8 +233,8 @@ const updateOrder = async (orderId, data) => {
                             milesPromised: item.milesPromised
                                 ? parseFloat(item.milesPromised.toString())
                                 : null,
-                            pictureUrl: item.pictureUrl || existingItem.pictureUrl,
-                            pictureStatus: item.pictureStatus || existingItem.pictureStatus,
+                            // pictureUrl: item.pictureUrl || existingItem.pictureUrl,
+                            // pictureStatus: item.pictureStatus || existingItem.pictureStatus,
                         },
                     });
                 }
