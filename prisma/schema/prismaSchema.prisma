@@ -349,6 +349,10 @@ model YardInfo {
   yardHandlingFee      Decimal?  @db.Decimal(18,2)
   yardProcessingFee    Decimal?  @db.Decimal(18,2)
   yardCorePrice        Decimal?  @db.Decimal(18,2)
+  
+  // yard charge fields
+  yardCharge           String?
+  yardChangedAmount    Decimal?  @db.Decimal(18,2)
 }
 
 model YardHistory {
@@ -371,13 +375,16 @@ model YardHistory {
   shipping        String?
   yardCost        Json?
   reason          String?
-  yardCharge      String?
 
   // yard prices
   yardTaxesPrice       Decimal?  @db.Decimal(18,2)
   yardHandlingFee      Decimal?  @db.Decimal(18,2)
   yardProcessingFee    Decimal?  @db.Decimal(18,2)
   yardCorePrice        Decimal?  @db.Decimal(18,2)
+  
+  // yard charge fields
+  yardCharge           String?
+  yardChangedAmount    Decimal?  @db.Decimal(18,2)
   
 }
 

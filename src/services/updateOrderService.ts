@@ -170,6 +170,10 @@ export const updateOrder = async (
         yardHandlingFee: yardInfo.yardHandlingFee,
         yardProcessingFee: yardInfo.yardProcessingFee,
         yardCorePrice: yardInfo.yardCorePrice,
+        yardCharge: yardInfo.yardCharge || null,
+        yardChangedAmount: yardInfo.yardChangedAmount
+          ? parseFloat(yardInfo.yardChangedAmount.toString())
+          : null,
       };
       if (yardInfo.yardWarranty) {
         const warrantyMap: { [key: string]: Warranty } = {

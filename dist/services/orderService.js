@@ -324,6 +324,10 @@ const createOrder = async (payload) => {
                     data: {
                         orderId: order.id,
                         ...yardInfo,
+                        yardCharge: yardInfo.yardCharge || null,
+                        yardChangedAmount: yardInfo.yardChangedAmount
+                            ? parseFloat(yardInfo.yardChangedAmount.toString())
+                            : null,
                     },
                 });
             }
