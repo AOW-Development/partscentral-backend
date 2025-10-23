@@ -233,8 +233,12 @@ const updateOrder = async (orderId, data) => {
                             milesPromised: item.milesPromised
                                 ? parseFloat(item.milesPromised.toString())
                                 : null,
-                            pictureUrl: item.pictureUrl || existingItem.pictureUrl,
-                            pictureStatus: item.pictureStatus || existingItem.pictureStatus,
+                            vinNumber: item.vinNumber !== undefined
+                                ? item.vinNumber
+                                : existingItem.vinNumber,
+                            notes: item.notes !== undefined ? item.notes : existingItem.notes,
+                            // pictureUrl: item.pictureUrl || existingItem.pictureUrl,
+                            // pictureStatus: item.pictureStatus || existingItem.pictureStatus,
                         },
                     });
                 }
@@ -314,6 +318,8 @@ const updateOrder = async (orderId, data) => {
                             milesPromised: item.milesPromised
                                 ? parseFloat(item.milesPromised.toString())
                                 : null,
+                            vinNumber: item.vinNumber || null,
+                            notes: item.notes || null,
                             pictureUrl: item.pictureUrl || null,
                             pictureStatus: item.pictureStatus || null,
                         },
@@ -343,7 +349,9 @@ const updateOrder = async (orderId, data) => {
             const existingPayments = await tx.payment.findMany({
                 where: { orderId },
             });
-            // Process payments
+            // Track which payment IDs are being processed
+            const processedPaymentIds = new Set();
+            // Process payments - upsert logic
             for (let i = 0; i < paymentsToProcess.length; i++) {
                 const payment = paymentsToProcess[i];
                 if (payment) {
@@ -361,6 +369,7 @@ const updateOrder = async (orderId, data) => {
                     const hasCharged = payment.charged && payment.charged.trim() !== "";
                     const hasEntity = payment.entity && payment.entity.trim() !== "";
                     console.log("DEBUG: Payment validation:", {
+                        paymentId: payment.id,
                         hasCardData,
                         hasAlternateCardData,
                         hasPaymentMethod,
@@ -383,14 +392,13 @@ const updateOrder = async (orderId, data) => {
                         console.log("DEBUG: Skipping payment - no payment data provided at all");
                         continue;
                     }
-                    const parsedAmount = payment.amount && isNaN(parseFloat(payment.amount)) ? parseFloat(payment.amount) : 0;
+                    const parsedAmount = payment.amount && !isNaN(parseFloat(payment.amount))
+                        ? parseFloat(payment.amount)
+                        : 0;
                     const paymentData = {
                         orderId,
                         provider: payment.provider || "NA",
                         amount: parsedAmount,
-                        // payment.amount !== undefined
-                        //   ? parseFloat(payment.amount)
-                        //   : parseFloat(orderData.totalAmount),
                         currency: payment.currency || "USD",
                         method: payment.paymentMethod || payment.merchantMethod || null,
                         status: payment.status || "PENDING",
@@ -424,11 +432,34 @@ const updateOrder = async (orderId, data) => {
                             "",
                         alternateCardBrand: payment.alternateCardData?.brand || "",
                     };
-                    await tx.payment.create({
-                        // data: {
-                        //   ...paymentData,
-                        // } as any,
-                        data: paymentData,
+                    // Check if this payment has an ID and exists in the database
+                    const paymentId = payment.id;
+                    const existingPayment = existingPayments.find((ep) => ep.id === paymentId);
+                    if (existingPayment) {
+                        // UPDATE existing payment
+                        console.log("DEBUG: Updating existing payment with ID:", paymentId);
+                        await tx.payment.update({
+                            where: { id: paymentId },
+                            data: paymentData,
+                        });
+                        processedPaymentIds.add(paymentId);
+                    }
+                    else {
+                        // CREATE new payment
+                        console.log("DEBUG: Creating new payment");
+                        const newPayment = await tx.payment.create({
+                            data: paymentData,
+                        });
+                        processedPaymentIds.add(newPayment.id);
+                    }
+                }
+            }
+            // DELETE payments that exist in DB but were removed from the frontend
+            for (const existingPayment of existingPayments) {
+                if (!processedPaymentIds.has(existingPayment.id)) {
+                    console.log("DEBUG: Deleting payment that was removed:", existingPayment.id);
+                    await tx.payment.delete({
+                        where: { id: existingPayment.id },
                     });
                 }
             }

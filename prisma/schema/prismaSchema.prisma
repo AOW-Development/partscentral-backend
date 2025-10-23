@@ -170,6 +170,8 @@ model OrderItem {
   partName        String
   specification   String
   milesPromised   Decimal?  @db.Decimal(18,2)
+  vinNumber       String?
+  notes           String?   @db.Text
   
   
   

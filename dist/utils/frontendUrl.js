@@ -1,5 +1,4 @@
 "use strict";
-// src/utils/frontendUrl.ts
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getFrontendUrl = getFrontendUrl;
 /**

@@ -5,7 +5,7 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
     try {
-        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, internalNotes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, estimatedDeliveryDate, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, orderCategoryStatus, problematicIssueType, } = payload;
+        const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, internalNotes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, estimatedDeliveryDate, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, orderCategoryStatus, problematicIssueType, pictureUrl, pictureStatus, } = payload;
         const mappedAddressType = typeof addressType === "string"
             ? client_1.AddressType[addressType.toUpperCase()]
             : addressType;
@@ -125,6 +125,8 @@ const createOrder = async (payload) => {
                     poConfirmAt: poConfirmAt ? new Date(poConfirmAt) : null,
                     metadata: metadata || null,
                     idempotencyKey: idempotencyKey || null,
+                    pictureUrl: pictureUrl || null,
+                    pictureStatus: pictureStatus || null,
                     invoiceSentAt: invoiceSentAt ? new Date(invoiceSentAt) : null,
                     invoiceStatus: invoiceStatus || null,
                     invoiceConfirmedAt: invoiceConfirmedAt
@@ -140,10 +142,7 @@ const createOrder = async (payload) => {
                 },
             });
             // 4. Create Order Items
-            // console.log(
-            //   "DEBUG: Creating order items with cartItems:",
-            //   JSON.stringify(cartItems, null, 2)
-            // );
+            console.log("DEBUG: Creating order items with cartItems:", JSON.stringify(cartItems, null, 2));
             if (cartItems && cartItems.length > 0) {
                 for (const item of cartItems) {
                     // Check if this is a manual item (no real product variant)
@@ -223,8 +222,10 @@ const createOrder = async (payload) => {
                         milesPromised: item.milesPromised
                             ? parseFloat(item.milesPromised.toString())
                             : null,
-                        pictureUrl: item.pictureUrl || null,
-                        pictureStatus: item.pictureStatus || null,
+                        vinNumber: item.vinNumber || null,
+                        notes: item.notes || null,
+                        // pictureUrl: item.pictureUrl || null,
+                        // pictureStatus: item.pictureStatus || null,
                         // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
                     };
                     console.log("DEBUG: Creating order item with data:", JSON.stringify(orderItemData, null, 2));
@@ -406,6 +407,7 @@ const deleteOrder = async (orderId) => {
             await tx.yardHistory.deleteMany({
                 where: { orderId },
             });
+            // Delete YardInfo (one-to-one relationship)
             await tx.yardInfo.deleteMany({
                 where: { orderId },
             });

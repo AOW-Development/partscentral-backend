@@ -101,7 +101,7 @@ export const updateOrder = async (
     //   }
     // }
 
-       if (customerInfo) {
+    if (customerInfo) {
       // update email.
       await tx.customer.update({
         where: { id: existingOrder.customerId },
@@ -114,7 +114,6 @@ export const updateOrder = async (
         },
       });
     }
-
 
     // 2. Handle Address Upsert
     if (billingInfo || shippingInfo) {
@@ -262,6 +261,11 @@ export const updateOrder = async (
               milesPromised: item.milesPromised
                 ? parseFloat(item.milesPromised.toString())
                 : null,
+              vinNumber:
+                item.vinNumber !== undefined
+                  ? item.vinNumber
+                  : existingItem.vinNumber,
+              notes: item.notes !== undefined ? item.notes : existingItem.notes,
               // pictureUrl: item.pictureUrl || existingItem.pictureUrl,
               // pictureStatus: item.pictureStatus || existingItem.pictureStatus,
             } as any,
@@ -346,6 +350,8 @@ export const updateOrder = async (
               milesPromised: item.milesPromised
                 ? parseFloat(item.milesPromised.toString())
                 : null,
+              vinNumber: item.vinNumber || null,
+              notes: item.notes || null,
               pictureUrl: item.pictureUrl || null,
               pictureStatus: item.pictureStatus || null,
             } as any,
@@ -382,7 +388,10 @@ export const updateOrder = async (
         where: { orderId },
       });
 
-      // Process payments
+      // Track which payment IDs are being processed
+      const processedPaymentIds = new Set<string | number>();
+
+      // Process payments - upsert logic
       for (let i = 0; i < paymentsToProcess.length; i++) {
         const payment = paymentsToProcess[i];
         if (payment) {
@@ -405,6 +414,7 @@ export const updateOrder = async (
           const hasEntity = payment.entity && payment.entity.trim() !== "";
 
           console.log("DEBUG: Payment validation:", {
+            paymentId: payment.id,
             hasCardData,
             hasAlternateCardData,
             hasPaymentMethod,
@@ -433,14 +443,14 @@ export const updateOrder = async (
             continue;
           }
 
-          const parsedAmount= payment.amount && isNaN(parseFloat(payment.amount)) ?  parseFloat(payment.amount):0 ;
+          const parsedAmount =
+            payment.amount && !isNaN(parseFloat(payment.amount))
+              ? parseFloat(payment.amount)
+              : 0;
           const paymentData: any = {
             orderId,
             provider: payment.provider || "NA",
-            amount:parsedAmount,
-              // payment.amount !== undefined
-              //   ? parseFloat(payment.amount)
-              //   : parseFloat(orderData.totalAmount),
+            amount: parsedAmount,
             currency: payment.currency || "USD",
             method: payment.paymentMethod || payment.merchantMethod || null,
             status: payment.status || "PENDING",
@@ -478,11 +488,40 @@ export const updateOrder = async (
             alternateCardBrand: payment.alternateCardData?.brand || "",
           };
 
-          await tx.payment.create({
-            // data: {
-            //   ...paymentData,
-            // } as any,
-            data: paymentData,
+          // Check if this payment has an ID and exists in the database
+          const paymentId = payment.id;
+          const existingPayment = existingPayments.find(
+            (ep) => ep.id === paymentId
+          );
+
+          if (existingPayment) {
+            // UPDATE existing payment
+            console.log("DEBUG: Updating existing payment with ID:", paymentId);
+            await tx.payment.update({
+              where: { id: paymentId },
+              data: paymentData,
+            });
+            processedPaymentIds.add(paymentId);
+          } else {
+            // CREATE new payment
+            console.log("DEBUG: Creating new payment");
+            const newPayment = await tx.payment.create({
+              data: paymentData,
+            });
+            processedPaymentIds.add(newPayment.id);
+          }
+        }
+      }
+
+      // DELETE payments that exist in DB but were removed from the frontend
+      for (const existingPayment of existingPayments) {
+        if (!processedPaymentIds.has(existingPayment.id)) {
+          console.log(
+            "DEBUG: Deleting payment that was removed:",
+            existingPayment.id
+          );
+          await tx.payment.delete({
+            where: { id: existingPayment.id },
           });
         }
       }

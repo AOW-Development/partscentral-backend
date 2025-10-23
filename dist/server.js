@@ -14,6 +14,7 @@ const leadRoutes_1 = __importDefault(require("./routes/leadRoutes"));
 const yardRoutes_1 = __importDefault(require("./routes/yardRoutes"));
 const problematicPart_routes_1 = __importDefault(require("./routes/problematicPart.routes"));
 const cors_1 = __importDefault(require("cors"));
+const uploadRoutes = require("./routes/upload");
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
 const io = (0, socket_1.initSocket)(httpServer);
@@ -44,6 +45,7 @@ app.use("/api/orders", order_routes_1.default);
 app.use("/api", leadRoutes_1.default);
 app.use("/api/yards", yardRoutes_1.default);
 app.use("/api/problematic-parts", problematicPart_routes_1.default);
+app.use("/api", uploadRoutes);
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

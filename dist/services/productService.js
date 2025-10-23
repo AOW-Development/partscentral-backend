@@ -227,7 +227,9 @@ const getAllProducts = async (page = 1, limit = 50, filters) => {
             { sku: { contains: filters.search } },
             { description: { contains: filters.search } },
             { modelYear: { model: { name: { contains: filters.search } } } },
-            { modelYear: { model: { make: { name: { contains: filters.search } } } } },
+            {
+                modelYear: { model: { make: { name: { contains: filters.search } } } },
+            },
             { modelYear: { year: { value: { contains: filters.search } } } },
             { partType: { name: { contains: filters.search } } },
         ];

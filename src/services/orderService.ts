@@ -185,20 +185,19 @@ export const createOrder = async (
       //   });
       // }
 
-      
-        const customer = await tx.customer.create({
-            data: {
-                email: customerInfo.email,
-                full_name:
-                customerInfo.firstName ||
-                `${customerInfo.firstName || billingInfo.firstName} ${
-                customerInfo.lastName || billingInfo.lastName
-              }`,
-                alternativePhone: customerInfo.alternativePhone
-                ? customerInfo.alternativePhone.toString()
-                : null,
-          },
-        });
+      const customer = await tx.customer.create({
+        data: {
+          email: customerInfo.email,
+          full_name:
+            customerInfo.firstName ||
+            `${customerInfo.firstName || billingInfo.firstName} ${
+              customerInfo.lastName || billingInfo.lastName
+            }`,
+          alternativePhone: customerInfo.alternativePhone
+            ? customerInfo.alternativePhone.toString()
+            : null,
+        },
+      });
 
       // 2. Create Address
       const newAddress = await tx.address.create({
@@ -370,6 +369,8 @@ export const createOrder = async (
             milesPromised: item.milesPromised
               ? parseFloat(item.milesPromised.toString())
               : null,
+            vinNumber: item.vinNumber || null,
+            notes: item.notes || null,
             // pictureUrl: item.pictureUrl || null,
             // pictureStatus: item.pictureStatus || null,
             // metadata: item.warranty ? { warranty: item.warranty, milesPromised: item.milesPromised } : null,
