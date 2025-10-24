@@ -36,6 +36,7 @@ export interface ProblematicPart {
   make?: string | null; // Vehicle make
   model?: string | null; // Vehicle model
   year?: string | null; // Vehicle year
+  parts?: string | null; // Vehicle parts
   specification?: string | null; // Part specification
 
   // Replacement data
@@ -129,6 +130,7 @@ export interface CreateProblematicPartRequest {
   make?: string;
   model?: string;
   year?: string;
+  parts?: string;
   specification?: string;
 
   // Replacement data

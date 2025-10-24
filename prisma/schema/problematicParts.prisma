@@ -38,6 +38,7 @@ model ProblematicPart {
   make                  String?             // Vehicle make
   model                 String?             // Vehicle model
   year                  String?             // Vehicle year
+  parts                 String?
   specification         String?             // Part specification
   
   // ===== REPLACEMENT DATA (if requestFromCustomer = "Replacement") =====
