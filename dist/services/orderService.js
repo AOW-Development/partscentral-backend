@@ -27,6 +27,24 @@ const createOrder = async (payload) => {
         else {
             validWarranty = client_1.Warranty.WARRANTY_30_DAYS;
         }
+        const formatFullAddress = (info) => {
+            if (!info)
+                return "";
+            const company = info.company || info.companyName || "";
+            const addressLine = info.address || info.street || info.addressLine || "";
+            const apartment = info.apartment || "";
+            const city = info.city || "";
+            const state = info.state || "";
+            const zipCode = info.zipCode || info.zip || "";
+            const country = info.country || "";
+            return [company, addressLine, apartment, city, state, zipCode, country]
+                .filter(Boolean)
+                .join(", ");
+        };
+        const shippingAddressStr = formatFullAddress(shippingInfo);
+        const billingAddressStr = formatFullAddress(billingInfo);
+        console.log("Formatted shipping address:", shippingAddressStr);
+        console.log("Formatted billing address:", billingAddressStr);
         return prisma.$transaction(async (tx) => {
             // 1. Find or Create Customer
             // let customer = await tx.customer.findUnique({
@@ -58,8 +76,12 @@ const createOrder = async (payload) => {
             const customer = await tx.customer.create({
                 data: {
                     email: customerInfo.email,
-                    full_name: customerInfo.firstName ||
-                        `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`,
+                    // full_name:
+                    //   customerInfo.firstName ||
+                    //   `${customerInfo.firstName || billingInfo.firstName} ${
+                    //     customerInfo.lastName || billingInfo.lastName
+                    //   }`,
+                    full_name: `${customerInfo.firstName || billingInfo.firstName} ${customerInfo.lastName || billingInfo.lastName}`.trim(),
                     alternativePhone: customerInfo.alternativePhone
                         ? customerInfo.alternativePhone.toString()
                         : null,

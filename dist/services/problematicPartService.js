@@ -62,6 +62,7 @@ async function updateProblematicPartInternal(tx, id, data) {
             make: data.make,
             model: data.model,
             year: data.year,
+            parts: data.parts,
             specification: data.specification,
             notes: data.notes,
             metadata: data.metadata
@@ -187,6 +188,7 @@ const createProblematicPart = async (data) => {
             make: data.make,
             model: data.model,
             year: data.year,
+            parts: data.parts,
             specification: data.specification,
             // Metadata
             notes: data.notes,
