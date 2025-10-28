@@ -98,6 +98,11 @@ model ProblematicPartReplacement {
   poStatus                  String?
   poSentAt                  DateTime?
   poConfirmedAt             DateTime?
+
+  // File uploads keys
+  photos                Json?               // Array of photo URLs
+  bolFile               String?             // BOL file URL
+  
   
   // Re-delivery Tracking (for replacement from new yard)
   redeliveryCarrierName     String?
