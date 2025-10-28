@@ -148,22 +148,18 @@ async function updateProblematicPartInternal(
       yardAmount: toDecimal(data.yardAmount),
       returnShippingPrice: toDecimal(data.returnShippingPrice),
       productReturned: data.productReturned,
-      photos: data.photos ? JSON.parse(JSON.stringify(data.photos)) : undefined,
+      photos: data.photos,
       bolFile: data.bolFile,
       problemCategory: data.problemCategory,
       description: data.description,
-      serviceDocuments: data.serviceDocuments
-        ? JSON.parse(JSON.stringify(data.serviceDocuments))
-        : undefined,
+      serviceDocuments: data.serviceDocuments,
       make: data.make,
       model: data.model,
       year: data.year,
       parts: data.parts,
       specification: data.specification,
       notes: data.notes,
-      metadata: data.metadata
-        ? JSON.parse(JSON.stringify(data.metadata))
-        : undefined,
+      metadata: data.metadata,
     },
   });
 
@@ -206,9 +202,7 @@ async function updateProblematicPartInternal(
         : undefined,
       redeliveryCarrierName: replacementData.redeliveryCarrierName,
       redeliveryTrackingNumber: replacementData.redeliveryTrackingNumber,
-      metadata: replacementData.metadata
-        ? JSON.parse(JSON.stringify(replacementData.metadata))
-        : undefined,
+      metadata: replacementData.metadata,
     };
 
     if (existing) {
@@ -286,15 +280,13 @@ export const createProblematicPart = async (
       productReturned: data.productReturned,
 
       // File uploads
-      photos: data.photos ? JSON.parse(JSON.stringify(data.photos)) : undefined,
+      photos: data.photos,
       bolFile: data.bolFile,
 
       // Defective specific
       problemCategory: data.problemCategory,
       description: data.description,
-      serviceDocuments: data.serviceDocuments
-        ? JSON.parse(JSON.stringify(data.serviceDocuments))
-        : undefined,
+      serviceDocuments: data.serviceDocuments,
 
       // Wrong product specific
       make: data.make,
@@ -305,9 +297,7 @@ export const createProblematicPart = async (
 
       // Metadata
       notes: data.notes,
-      metadata: data.metadata
-        ? JSON.parse(JSON.stringify(data.metadata))
-        : undefined,
+      metadata: data.metadata,
     };
 
     // Create problematic part
@@ -368,9 +358,7 @@ export const createProblematicPart = async (
           redeliveryTrackingNumber: replacementData.redeliveryTrackingNumber,
 
           // Metadata
-          metadata: replacementData.metadata
-            ? JSON.parse(JSON.stringify(replacementData.metadata))
-            : undefined,
+          metadata: replacementData.metadata,
         },
       });
     }
