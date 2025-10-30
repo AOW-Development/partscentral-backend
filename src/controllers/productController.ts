@@ -5,6 +5,43 @@ import { PrismaClient } from "@prisma/client";
 const productService = require("../services/productService");
 const prisma = new PrismaClient();
 
+exports.createListing = async (req: Request, res: Response) => {
+  try {
+    const { make, model, year, part, specification } = req.body || {};
+    if (!make || !model || !year || !part) {
+      return res
+        .status(400)
+        .json({ error: "make, model, year and part are required" });
+    }
+    const result = await productService.createListing({
+      make,
+      model,
+      year,
+      part,
+      specification,
+    });
+    res.status(201).json(result);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+};
+
+exports.deleteProduct = async (req: Request, res: Response) => {
+  try {
+    const productId = parseInt(req.params.id);
+    if (isNaN(productId)) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
+
+    const result = await productService.deleteProduct(productId);
+    res.status(200).json(result);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+};
+
 exports.getProductsByVehicle = async (req: Request, res: Response) => {
   const { make, model, year, part } = req.query;
   try {
