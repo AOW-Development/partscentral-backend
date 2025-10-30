@@ -7,7 +7,7 @@ const { Upload } = require('@aws-sdk/lib-storage');
 
  // Initialize a s3 client 
  const s3Client = new S3Client({
-    region: "us-west-2",
+    region: process.env.AWS_REGION,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
