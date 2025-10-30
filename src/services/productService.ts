@@ -266,18 +266,61 @@ export const getAllProducts = async (
     where.partType = { name: filters.part };
   }
 
-  // Search across multiple fields
+  // Tokenized, case-insensitive search across multiple fields with AND logic
   if (filters?.search && filters.search.trim() !== "") {
-    where.OR = [
-      { sku: { contains: filters.search } },
-      { description: { contains: filters.search } },
-      { modelYear: { model: { name: { contains: filters.search } } } },
-      {
-        modelYear: { model: { make: { name: { contains: filters.search } } } },
-      },
-      { modelYear: { year: { value: { contains: filters.search } } } },
-      { partType: { name: { contains: filters.search } } },
-    ];
+    const tokens = filters.search
+      .split(/[\s,]+/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    if (tokens.length === 1) {
+      const term = tokens[0];
+      where.OR = [
+        { sku: { contains: term } },
+        { description: { contains: term } },
+        {
+          modelYear: {
+            model: { name: { contains: term } },
+          },
+        },
+        {
+          modelYear: {
+            model: { make: { name: { contains: term } } },
+          },
+        },
+        {
+          modelYear: {
+            year: { value: { contains: term } },
+          },
+        },
+        { partType: { name: { contains: term } } },
+      ];
+    } else if (tokens.length > 1) {
+      where.AND = tokens.map((term) => ({
+        OR: [
+          { sku: { contains: term } },
+          { description: { contains: term } },
+          {
+            modelYear: {
+              model: { name: { contains: term } },
+            },
+          },
+          {
+            modelYear: {
+              model: {
+                make: { name: { contains: term } },
+              },
+            },
+          },
+          {
+            modelYear: {
+              year: { value: { contains: term } },
+            },
+          },
+          { partType: { name: { contains: term } } },
+        ],
+      }));
+    }
   }
 
   const [products, total] = await Promise.all([
@@ -343,4 +386,223 @@ export const getAllProducts = async (
       totalPages: Math.ceil(total / limit),
     },
   };
+};
+
+export const createListing = async (params: {
+  make: string;
+  model: string;
+  year: string;
+  part: string;
+  specification?: string;
+}) => {
+  const makeName = params.make?.trim();
+  const modelName = params.model?.trim();
+  const yearValue = params.year?.trim();
+  const partName = params.part?.trim();
+  const specification = params.specification?.trim();
+
+  if (!makeName || !modelName || !yearValue || !partName) {
+    throw new Error("Missing required fields: make, model, year, part");
+  }
+
+  // Ensure base taxonomy exists
+  const make = await prisma.make.upsert({
+    where: { name: makeName },
+    update: {},
+    create: { name: makeName },
+  });
+
+  const model = await prisma.model.upsert({
+    where: { name_makeId: { name: modelName, makeId: make.id } },
+    update: {},
+    create: { name: modelName, makeId: make.id },
+  });
+
+  const year = await prisma.year.upsert({
+    where: { value: yearValue },
+    update: {},
+    create: { value: yearValue },
+  });
+
+  const modelYear = await prisma.modelYear.upsert({
+    where: { modelId_yearId: { modelId: model.id, yearId: year.id } },
+    update: {},
+    create: { modelId: model.id, yearId: year.id },
+  });
+
+  const partType = await prisma.partType.upsert({
+    where: { name: partName },
+    update: {},
+    create: { name: partName },
+  });
+
+  // Create or find the SubPart first if specification exists
+  let targetSubPart = null;
+  if (specification) {
+    targetSubPart = await prisma.subPart.upsert({
+      where: {
+        name_partTypeId: { name: specification, partTypeId: partType.id },
+      },
+      update: {},
+      create: { name: specification, partTypeId: partType.id },
+    });
+  }
+
+  // Try to find an existing product for this EXACT combination
+  // Each unique specification should create a SEPARATE product
+  let product = null;
+
+  if (specification && targetSubPart) {
+    // Find products with same modelYear, partType
+    const potentialProducts = await prisma.product.findMany({
+      where: {
+        modelYearId: modelYear.id,
+        partTypeId: partType.id,
+        subParts: {
+          some: { id: targetSubPart.id },
+        },
+      },
+      include: {
+        subParts: true,
+        variants: true,
+        images: true,
+        modelYear: {
+          include: { model: { include: { make: true } }, year: true },
+        },
+        partType: true,
+      },
+    });
+
+    // Only reuse if product has EXACTLY this one subPart and no others
+    // This ensures each specification gets its own product
+    product =
+      potentialProducts.find(
+        (p) => p.subParts.length === 1 && p.subParts[0].id === targetSubPart.id
+      ) || null;
+  } else {
+    // No specification provided - find product with same modelYear and partType with NO subParts
+    product = await prisma.product.findFirst({
+      where: {
+        modelYearId: modelYear.id,
+        partTypeId: partType.id,
+        subParts: {
+          none: {}, // No subParts
+        },
+      },
+      include: {
+        subParts: true,
+        variants: true,
+        images: true,
+        modelYear: {
+          include: { model: { include: { make: true } }, year: true },
+        },
+        partType: true,
+      },
+    });
+  }
+
+  // Create new product if not found or specification differs
+  if (!product) {
+    const skuBase = `${makeName}-${modelName}-${yearValue}-${partName}`
+      .toUpperCase()
+      .replace(/\s+/g, "-");
+    const sku = specification
+      ? `${skuBase}-${specification}`.toUpperCase().replace(/\s+/g, "-")
+      : `${skuBase}`;
+
+    const createData: any = {
+      sku,
+      modelYearId: modelYear.id,
+      partTypeId: partType.id,
+      inStock: false,
+      status: null,
+    };
+
+    // Connect subPart during product creation if specification exists
+    if (specification && targetSubPart) {
+      createData.subParts = {
+        connect: { id: targetSubPart.id },
+      };
+    }
+
+    product = await prisma.product.create({
+      data: createData,
+      include: {
+        subParts: true,
+        variants: true,
+        images: true,
+        modelYear: {
+          include: { model: { include: { make: true } }, year: true },
+        },
+        partType: true,
+      },
+    });
+
+    // Create default variant for new product
+    let productvariant_1 = await prisma.productVariant_1.create({
+      data: {
+        productId: product.id,
+        sku: `${sku}-N/A`,
+        miles: null,
+        actualprice: 0,
+        discountedPrice: 0,
+        inStock: false,
+        product_img: null,
+        description: null,
+        title: null,
+        specification: specification || null,
+      },
+    });
+    console.log("productvariant_1:", productvariant_1);
+  }
+
+  return {
+    id: product.id,
+    sku: product.sku,
+    make: product.modelYear.model.make.name,
+    model: product.modelYear.model.name,
+    year: product.modelYear.year.value,
+    part: product.partType.name,
+    specification: specification || "",
+    status: product.inStock ? "Instock" : "Outstock",
+    images: product.images,
+    subParts: product.subParts,
+    variants: product.variants,
+  };
+};
+
+export const deleteProduct = async (productId: number) => {
+  // Check if product exists
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: {
+      variants: true,
+      orderItems: true,
+    },
+  });
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  // Check if product has any order items (prevent deletion if it's been ordered)
+  if (product.orderItems && product.orderItems.length > 0) {
+    throw new Error(
+      "Cannot delete product that has been ordered. Please contact support."
+    );
+  }
+
+  // Delete product variants first (due to foreign key constraints)
+  if (product.variants && product.variants.length > 0) {
+    await prisma.productVariant_1.deleteMany({
+      where: { productId: productId },
+    });
+  }
+
+  // Delete the product
+  await prisma.product.delete({
+    where: { id: productId },
+  });
+
+  return { success: true, message: "Product deleted successfully" };
 };
