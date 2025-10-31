@@ -143,7 +143,7 @@ export const createOrder = async (
       "1 Year": Warranty.WARRANTY_1_YEAR,
     };
 
-    let validWarranty: Warranty;
+    let validWarranty: Warranty | null = null;
     if (warranty && warrantyMap[warranty]) {
       validWarranty = warrantyMap[warranty];
     } else if (
@@ -152,7 +152,7 @@ export const createOrder = async (
     ) {
       validWarranty = warranty as Warranty;
     } else {
-      validWarranty = Warranty.WARRANTY_30_DAYS;
+      validWarranty = null;
     }
 
     const formatFullAddress = (info: any) => {
@@ -265,8 +265,8 @@ export const createOrder = async (
           estimatedDeliveryDate: estimatedDeliveryDate
             ? new Date(estimatedDeliveryDate)
             : null,
-          shippingAddress,
-          billingAddress,
+          shippingAddress: shippingAddressStr || shippingAddress ,
+          billingAddress : billingAddressStr || billingAddress,
           companyName:
             companyName || shippingInfo.company || billingInfo.company || null,
           billingSnapshot: billingInfo,
