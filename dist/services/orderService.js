@@ -16,7 +16,7 @@ const createOrder = async (payload) => {
             "6 Months": client_1.Warranty.WARRANTY_6_MONTHS,
             "1 Year": client_1.Warranty.WARRANTY_1_YEAR,
         };
-        let validWarranty;
+        let validWarranty = null;
         if (warranty && warrantyMap[warranty]) {
             validWarranty = warrantyMap[warranty];
         }
@@ -25,7 +25,7 @@ const createOrder = async (payload) => {
             validWarranty = warranty;
         }
         else {
-            validWarranty = client_1.Warranty.WARRANTY_30_DAYS;
+            validWarranty = null;
         }
         const formatFullAddress = (info) => {
             if (!info)
@@ -116,8 +116,8 @@ const createOrder = async (payload) => {
                     estimatedDeliveryDate: estimatedDeliveryDate
                         ? new Date(estimatedDeliveryDate)
                         : null,
-                    shippingAddress,
-                    billingAddress,
+                    shippingAddress: shippingAddressStr || shippingAddress,
+                    billingAddress: billingAddressStr || billingAddress,
                     companyName: companyName || shippingInfo.company || billingInfo.company || null,
                     billingSnapshot: billingInfo,
                     shippingSnapshot: shippingInfo,
