@@ -175,3 +175,50 @@ exports.getAllProducts = async (req: Request, res: Response) => {
       .json({ error: err instanceof Error ? err.message : String(err) });
   }
 };
+
+// Create variant for a product
+exports.createVariant = async (req: Request, res: Response) => {
+  try {
+    const productId = parseInt(String(req.params.id));
+    if (isNaN(productId)) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
+    const payload = req.body || {};
+    const result = await productService.createVariant(productId, payload);
+    res.status(201).json(result);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+};
+
+// Update existing variant
+exports.updateVariant = async (req: Request, res: Response) => {
+  try {
+    const variantId = parseInt(String(req.params.variantId));
+    if (isNaN(variantId)) {
+      return res.status(400).json({ error: "Invalid variant ID" });
+    }
+    const payload = req.body || {};
+    const result = await productService.updateVariant(variantId, payload);
+    res.status(200).json(result);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+};
+
+// Delete existing variant
+exports.deleteVariant = async (req: Request, res: Response) => {
+  try {
+    const variantId = parseInt(String(req.params.variantId));
+    if (isNaN(variantId)) {
+      return res.status(400).json({ error: "Invalid variant ID" });
+    }
+    const result = await productService.deleteVariant(variantId);
+    res.status(200).json(result);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message || String(err) });
+  }
+};
