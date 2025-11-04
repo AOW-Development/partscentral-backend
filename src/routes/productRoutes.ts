@@ -20,4 +20,9 @@ router.get(
 );
 
 router.get("/years", productController.getYearsForMakeModel);
+
+// Variants
+router.post("/:id/variants", productController.createVariant);
+router.put("/variants/:variantId", productController.updateVariant);
+router.delete("/variants/:variantId", productController.deleteVariant);
 export default router;

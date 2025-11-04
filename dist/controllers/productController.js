@@ -3,6 +3,42 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const productService = require("../services/productService");
 const prisma = new client_1.PrismaClient();
+exports.createListing = async (req, res) => {
+    try {
+        const { make, model, year, part, specification } = req.body || {};
+        if (!make || !model || !year || !part) {
+            return res
+                .status(400)
+                .json({ error: "make, model, year and part are required" });
+        }
+        const result = await productService.createListing({
+            make,
+            model,
+            year,
+            part,
+            specification,
+        });
+        res.status(201).json(result);
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message || String(err) });
+    }
+};
+exports.deleteProduct = async (req, res) => {
+    try {
+        const productId = parseInt(req.params.id);
+        if (isNaN(productId)) {
+            return res.status(400).json({ error: "Invalid product ID" });
+        }
+        const result = await productService.deleteProduct(productId);
+        res.status(200).json(result);
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message || String(err) });
+    }
+};
 exports.getProductsByVehicle = async (req, res) => {
     const { make, model, year, part } = req.query;
     try {
@@ -123,5 +159,52 @@ exports.getAllProducts = async (req, res) => {
         res
             .status(500)
             .json({ error: err instanceof Error ? err.message : String(err) });
+    }
+};
+// Create variant for a product
+exports.createVariant = async (req, res) => {
+    try {
+        const productId = parseInt(String(req.params.id));
+        if (isNaN(productId)) {
+            return res.status(400).json({ error: "Invalid product ID" });
+        }
+        const payload = req.body || {};
+        const result = await productService.createVariant(productId, payload);
+        res.status(201).json(result);
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message || String(err) });
+    }
+};
+// Update existing variant
+exports.updateVariant = async (req, res) => {
+    try {
+        const variantId = parseInt(String(req.params.variantId));
+        if (isNaN(variantId)) {
+            return res.status(400).json({ error: "Invalid variant ID" });
+        }
+        const payload = req.body || {};
+        const result = await productService.updateVariant(variantId, payload);
+        res.status(200).json(result);
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message || String(err) });
+    }
+};
+// Delete existing variant
+exports.deleteVariant = async (req, res) => {
+    try {
+        const variantId = parseInt(String(req.params.variantId));
+        if (isNaN(variantId)) {
+            return res.status(400).json({ error: "Invalid variant ID" });
+        }
+        const result = await productService.deleteVariant(variantId);
+        res.status(200).json(result);
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message || String(err) });
     }
 };

@@ -462,6 +462,10 @@ model ProductVariant_1 {
   id              Int         @id @default(autoincrement())
   sku             String      @unique
   productId       Int
+  heading1        String?
+  heading2        String?
+  category        String?
+  warranty        String?
   miles           String?
   actualprice     Float?
   discountedPrice Float?

@@ -543,7 +543,11 @@ export const createListing = async (params: {
       data: {
         productId: product.id,
         sku: `${sku}-N/A`,
-        miles: null,
+        heading1: createData.heading1 ?? null,
+        heading2: createData.heading2 ?? null,
+        category: createData.category ?? null,
+        warranty: createData.warranty ?? null,
+        miles: "N/A",
         actualprice: 0,
         discountedPrice: 0,
         inStock: false,
@@ -605,4 +609,140 @@ export const deleteProduct = async (productId: number) => {
   });
 
   return { success: true, message: "Product deleted successfully" };
+};
+
+export const createVariant = async (
+  productId: number,
+  payload: {
+    heading1?: string | null;
+    heading2?: string | null;
+    category?: string | null;
+    warranty?: string | null;
+    miles?: string | null;
+    actualprice?: number | null;
+    discountedPrice?: number | null;
+    inStock?: boolean | null;
+    specification?: string | null;
+    title?: string | null;
+    description?: string | null;
+  }
+) => {
+  const product = await prisma.product.findUnique({ where: { id: productId } });
+  if (!product) throw new Error("Product not found");
+
+  const sku = `${product.sku || "SKU"}-${payload.miles || "N/A"}`;
+  const created = await prisma.productVariant_1.create({
+    data: {
+      productId,
+      sku,
+      heading1: payload.heading1 ?? null,
+      heading2: payload.heading2 ?? null,
+      category: payload.category ?? null,
+      warranty: payload.warranty ?? null,
+      miles: payload.miles ?? "N/A",
+      actualprice: payload.actualprice ?? 0,
+      discountedPrice: payload.discountedPrice ?? 0,
+      inStock: payload.inStock ?? false,
+      specification: payload.specification ?? null,
+      title: payload.title ?? null,
+      description: payload.description ?? null,
+      product_img: null,
+    },
+  });
+
+  // Update product stock to reflect variant
+  await prisma.product.update({
+    where: { id: productId },
+    data: { inStock: Boolean(payload.inStock ?? false) },
+  });
+
+  return created;
+};
+
+export const updateVariant = async (
+  variantId: number,
+  payload: {
+    heading1?: string | null;
+    heading2?: string | null;
+    category?: string | null;
+    warranty?: string | null;
+    miles?: string | null;
+    actualprice?: number | null;
+    discountedPrice?: number | null;
+    inStock?: boolean | null;
+    specification?: string | null;
+    title?: string | null;
+    description?: string | null;
+  }
+) => {
+  // Ensure variant exists
+  const existing = await prisma.productVariant_1.findUnique({
+    where: { id: variantId },
+    include: { product: true },
+  });
+  if (!existing) throw new Error("Variant not found");
+
+  const updated = await prisma.productVariant_1.update({
+    where: { id: variantId },
+    data: {
+      heading1: payload.heading1 ?? existing.heading1,
+      heading2: payload.heading2 ?? existing.heading2,
+      category: payload.category ?? existing.category,
+      warranty: payload.warranty ?? existing.warranty,
+      miles: payload.miles ?? existing.miles,
+      actualprice:
+        payload.actualprice !== undefined
+          ? payload.actualprice
+          : existing.actualprice,
+      discountedPrice:
+        payload.discountedPrice !== undefined
+          ? payload.discountedPrice
+          : existing.discountedPrice,
+      inStock:
+        payload.inStock !== undefined
+          ? Boolean(payload.inStock)
+          : existing.inStock,
+      specification:
+        payload.specification !== undefined
+          ? payload.specification
+          : existing.specification,
+      title: payload.title !== undefined ? payload.title : existing.title,
+      description:
+        payload.description !== undefined
+          ? payload.description
+          : existing.description,
+    },
+  });
+
+  // Optionally update product stock
+  if (payload.inStock !== undefined && existing.product) {
+    await prisma.product.update({
+      where: { id: existing.productId },
+      data: { inStock: Boolean(payload.inStock) },
+    });
+  }
+
+  return updated;
+};
+
+export const deleteVariant = async (variantId: number) => {
+  const existing = await prisma.productVariant_1.findUnique({
+    where: { id: variantId },
+  });
+  if (!existing) throw new Error("Variant not found");
+
+  await prisma.productVariant_1.delete({ where: { id: variantId } });
+
+  // If product has no variants left, mark product out of stock
+  const remaining = await prisma.productVariant_1.count({
+    where: { productId: existing.productId },
+  });
+  if (remaining === 0) {
+    await prisma.product.update({
+      where: { id: existing.productId },
+      data: { inStock: false },
+    });
+  }
+
+  return { success: true };
 };
