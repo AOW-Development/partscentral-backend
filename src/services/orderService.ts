@@ -265,8 +265,8 @@ export const createOrder = async (
           estimatedDeliveryDate: estimatedDeliveryDate
             ? new Date(estimatedDeliveryDate)
             : null,
-          shippingAddress,
-          billingAddress,
+          shippingAddress : shippingAddress || shippingAddressStr,
+          billingAddress : billingAddress || billingAddressStr,
           companyName:
             companyName || shippingInfo.company || billingInfo.company || null,
           billingSnapshot: billingInfo,
