@@ -31,6 +31,7 @@ enum Warranty {
   WARRANTY_90_DAYS
   WARRANTY_6_MONTHS
   WARRANTY_1_YEAR
+  NONE
 }
 
 enum AddressType {
@@ -139,7 +140,7 @@ model Order {
   invoiceStatus     String?
   estimatedDeliveryDate DateTime? 
   // warranty 
-  warranty          Warranty?
+  warranty          String? 
 
   // Order Category Status
   orderCategoryStatus String?

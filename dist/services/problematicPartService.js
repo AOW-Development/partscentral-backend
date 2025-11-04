@@ -143,7 +143,7 @@ const createProblematicPart = async (data) => {
             where: { id: data.orderId },
         });
         if (!order) {
-            throw new Error(`Order with ID ${data.orderId} not found.`);
+            throw new Error(`Order with ID ${data.orderId} not found.Please create order.`);
         }
         // Check if problematic part already exists for this order
         // Using findFirst since unique constraint may not be applied yet

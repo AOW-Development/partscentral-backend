@@ -145,14 +145,14 @@ export const createOrder = async (
 
     let validWarranty: Warranty | null = null;
     if (warranty && warrantyMap[warranty]) {
-      validWarranty = warrantyMap[warranty];
+          validWarranty = warrantyMap[warranty];
     } else if (
-      warranty &&
-      Object.values(Warranty).includes(warranty as Warranty)
+          warranty &&
+          Object.values(Warranty).includes(warranty as Warranty)
     ) {
-      validWarranty = warranty as Warranty;
+          validWarranty = warranty as Warranty;
     } else {
-      validWarranty = null;
+          validWarranty = null;
     }
 
     const formatFullAddress = (info: any) => {
