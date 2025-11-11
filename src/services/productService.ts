@@ -546,7 +546,7 @@ export const createListing = async (params: {
         heading1: createData.heading1 ?? null,
         heading2: createData.heading2 ?? null,
         category: createData.category ?? null,
-        warranty: createData.warranty ?? null,
+        warranty: createData.warranty ?? "90 Days",
         miles: "N/A",
         actualprice: 0,
         discountedPrice: 0,
@@ -555,6 +555,10 @@ export const createListing = async (params: {
         description: null,
         title: null,
         specification: specification || null,
+        seoTitle: null,
+        seoSlug: null,
+        seoCanonical: null,
+        seoDescription: null,
       },
     });
     console.log("productvariant_1:", productvariant_1);
@@ -625,6 +629,10 @@ export const createVariant = async (
     specification?: string | null;
     title?: string | null;
     description?: string | null;
+    seoTitle?: string | null;
+    seoSlug?: string | null;
+    seoCanonical?: string | null;
+    seoDescription?: string | null;
   }
 ) => {
   const product = await prisma.product.findUnique({ where: { id: productId } });
@@ -647,6 +655,10 @@ export const createVariant = async (
       title: payload.title ?? null,
       description: payload.description ?? null,
       product_img: null,
+      seoTitle: payload.seoTitle ?? null,
+      seoSlug: payload.seoSlug ?? null,
+      seoCanonical: payload.seoCanonical ?? null,
+      seoDescription: payload.seoDescription ?? null,
     },
   });
 
@@ -673,6 +685,10 @@ export const updateVariant = async (
     specification?: string | null;
     title?: string | null;
     description?: string | null;
+    seoTitle?: string | null;
+    seoSlug?: string | null;
+    seoCanonical?: string | null;
+    seoDescription?: string | null;
   }
 ) => {
   // Ensure variant exists
@@ -711,6 +727,10 @@ export const updateVariant = async (
         payload.description !== undefined
           ? payload.description
           : existing.description,
+      seoTitle: payload.seoTitle ?? existing.seoTitle,
+      seoSlug: payload.seoSlug ?? existing.seoSlug,
+      seoCanonical: payload.seoCanonical ?? existing.seoCanonical,
+      seoDescription: payload.seoDescription ?? existing.seoDescription,
     },
   });
 

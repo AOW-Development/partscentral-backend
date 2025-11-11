@@ -472,10 +472,14 @@ model ProductVariant_1 {
   product         Product     @relation("ProductToVariant", fields: [productId], references: [id])
   orderItems      OrderItem[]
 
-  product_img   String?
-  description   String? @db.Text
-  title         String?
-  specification String?
+  product_img    String?
+  description    String? @db.Text
+  title          String?
+  specification  String?
+  seoTitle       String?
+  seoSlug        String?
+  seoCanonical   String?
+  seoDescription String?
 
 }
 
