@@ -110,7 +110,7 @@ model Order {
   address           Address?    @relation(fields: [addressId], references: [id])
   addressType       String?
   companyName       String?
-  shippingAddress   String?
+  shippingAddress String? @db.Text
   billingAddress    String?
   
   // Metadata
@@ -504,3 +504,14 @@ model Lead {
   created_at DateTime @default(now())
   data       Json
 }
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String    @default("stripe")  // You can store 'stripe', 'paypal', etc.
+  eventId     String    @unique             // Stripe event.id for deduplication
+  type        String?                       // e.g., 'payment_intent.succeeded'
+  payload     Json                           // The full JSON data received
+  receivedAt  DateTime  @default(now())
+  processed   Boolean   @default(false)      // Mark true after successful handling
+}
+

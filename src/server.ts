@@ -8,6 +8,7 @@ import orderRoutes from "./routes/order.routes";
 import leadRoutes from "./routes/leadRoutes";
 import yardRoutes from "./routes/yardRoutes";
 import problematicPartRoutes from "./routes/problematicPart.routes";
+import webhookRoutes from "./routes/webhookRoutes";
 import cors from "cors";
 const uploadRoutes = require("./routes/upload");
 const app = express();
@@ -45,6 +46,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api", leadRoutes);
 app.use("/api/yards", yardRoutes);
 app.use("/api/problematic-parts", problematicPartRoutes);
+app.use("/api/webhooks", webhookRoutes);
 
 app.use("/api", uploadRoutes);
 const PORT = process.env.PORT || 3001;
