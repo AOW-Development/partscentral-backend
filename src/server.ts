@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes';
 import orderRoutes from './routes/order.routes';
 import leadRoutes from './routes/leadRoutes';
 import yardRoutes from './routes/yardRoutes';
+import webhookRoutes from './routes/webhookRoutes';
 import cors from 'cors';
 
 const app = express();
@@ -18,6 +19,10 @@ const DASHBOARD_URL = process.env.DASHBOARD_URL || 'http://localhost:4000';
 const WITH_WWW = process.env.WITH_WWW ;
 
 const allowedOrigins = [FRONTEND_URL, DASHBOARD_URL,WITH_WWW];
+
+app.get('/api/health', (req, res) => {
+  res.json({ message: '✅ Server is running fine!' });
+});
 
 // Configure CORS with specific options
 app.use(cors({
@@ -42,6 +47,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api', leadRoutes);
 app.use('/api/yards', yardRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {

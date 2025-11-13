@@ -490,3 +490,15 @@ model Lead {
   data       Json
 }
 
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String    @default("stripe")  // You can store 'stripe', 'paypal', etc.
+  eventId     String    @unique             // Stripe event.id for deduplication
+  type        String?                       // e.g., 'payment_intent.succeeded'
+  payload     Json                           // The full JSON data received
+  receivedAt  DateTime  @default(now())
+  processed   Boolean   @default(false)      // Mark true after successful handling
+}
+
+
