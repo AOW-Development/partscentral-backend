@@ -80,7 +80,16 @@ interface CreateOrderPayload {
 export const createOrder = async (
   payload: CreateOrderPayload
 ): Promise<any> => {
+  
+  // if (process.env.SIMULATE_ORDER_SERVICE_ERROR === "true") {
+  //   const err = new Error("Simulated server error for SMS test");
+  //   console.error("OrderService simulated error:", err, payload);
+  //   (err as any).status= 500;
+  //   throw err;
+  // }
+  
   try {
+    
     const {
       billingInfo,
       shippingInfo,
