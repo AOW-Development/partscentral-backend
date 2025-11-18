@@ -481,6 +481,17 @@ model ProductVariant_1 {
   seoSlug        String?
   seoCanonical   String?
   seoDescription String?
+  googleProductCategory   String?
+  productType             String?
+  customLabel1            String?
+  customLabel2            String?
+  customLabel3            String?
+  customLabel4            String?
+  itemGroupId             String?
+  promotionId             String?
+  displayInGoogleFeed     String?
+  googleProductHighlights String?
+
 
 }
 

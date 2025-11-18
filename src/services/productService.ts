@@ -633,6 +633,16 @@ export const createVariant = async (
     seoSlug?: string | null;
     seoCanonical?: string | null;
     seoDescription?: string | null;
+    googleProductCategory?: string | null;
+    productType?: string | null;
+    customLabel1?: string | null;
+    customLabel2?: string | null;
+    customLabel3?: string | null;
+    customLabel4?: string | null;
+    itemGroupId?: string | null;
+    promotionId?: string | null;
+    displayInGoogleFeed?: string | null;
+    googleProductHighlights?: string | null;
   }
 ) => {
   const product = await prisma.product.findUnique({ where: { id: productId } });
@@ -659,6 +669,17 @@ export const createVariant = async (
       seoSlug: payload.seoSlug ?? null,
       seoCanonical: payload.seoCanonical ?? null,
       seoDescription: payload.seoDescription ?? null,
+      googleProductCategory : payload.googleProductCategory,
+      productType : payload.productType,
+      customLabel1 : payload.customLabel1,
+      customLabel2 : payload.customLabel2,
+      customLabel3 : payload.customLabel3,
+      customLabel4 : payload.customLabel4,
+      itemGroupId : payload.itemGroupId,
+      promotionId : payload.promotionId,
+      displayInGoogleFeed : payload.displayInGoogleFeed,
+      googleProductHighlights : payload.googleProductHighlights,
+
     },
   });
 
@@ -689,6 +710,17 @@ export const updateVariant = async (
     seoSlug?: string | null;
     seoCanonical?: string | null;
     seoDescription?: string | null;
+    googleProductCategory?: string | null;
+    productType?: string | null;
+    customLabel1?: string | null;
+    customLabel2?: string | null;
+    customLabel3?: string | null;
+    customLabel4?: string | null;
+    itemGroupId?: string | null;
+    promotionId?: string | null;
+    displayInGoogleFeed?: string | null;
+    googleProductHighlights?: string | null;
+  
   }
 ) => {
   // Ensure variant exists
@@ -731,6 +763,16 @@ export const updateVariant = async (
       seoSlug: payload.seoSlug ?? existing.seoSlug,
       seoCanonical: payload.seoCanonical ?? existing.seoCanonical,
       seoDescription: payload.seoDescription ?? existing.seoDescription,
+      googleProductCategory : payload.googleProductCategory,
+      productType : payload.productType,
+      customLabel1 : payload.customLabel1,
+      customLabel2 : payload.customLabel2,
+      customLabel3 : payload.customLabel3,
+      customLabel4 : payload.customLabel4,
+      itemGroupId : payload.itemGroupId,
+      promotionId : payload.promotionId,
+      displayInGoogleFeed : payload.displayInGoogleFeed,
+      googleProductHighlights : payload.googleProductHighlights,
     },
   });
 
