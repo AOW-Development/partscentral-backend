@@ -13,6 +13,7 @@ const order_routes_1 = __importDefault(require("./routes/order.routes"));
 const leadRoutes_1 = __importDefault(require("./routes/leadRoutes"));
 const yardRoutes_1 = __importDefault(require("./routes/yardRoutes"));
 const problematicPart_routes_1 = __importDefault(require("./routes/problematicPart.routes"));
+const webhookRoutes_1 = __importDefault(require("./routes/webhookRoutes"));
 const cors_1 = __importDefault(require("cors"));
 const uploadRoutes = require("./routes/upload");
 const app = (0, express_1.default)();
@@ -45,6 +46,7 @@ app.use("/api/orders", order_routes_1.default);
 app.use("/api", leadRoutes_1.default);
 app.use("/api/yards", yardRoutes_1.default);
 app.use("/api/problematic-parts", problematicPart_routes_1.default);
+app.use("/api/webhooks", webhookRoutes_1.default);
 app.use("/api", uploadRoutes);
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {

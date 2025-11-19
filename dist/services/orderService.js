@@ -4,6 +4,12 @@ exports.deleteOrder = exports.getOrderById = exports.getOrders = exports.createO
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createOrder = async (payload) => {
+    // if (process.env.SIMULATE_ORDER_SERVICE_ERROR === "true") {
+    //   const err = new Error("Simulated server error for SMS test");
+    //   console.error("OrderService simulated error:", err, payload);
+    //   (err as any).status= 500;
+    //   throw err;
+    // }
     try {
         const { billingInfo, shippingInfo, customerInfo, cartItems, paymentInfo, totalAmount, subtotal, orderNumber, source, status, year, saleMadeBy, notes, internalNotes, vinNumber, orderDate, alternativePhone, carrierName, trackingNumber, estimatedDeliveryDate, customerNotes, yardNotes, shippingAddress, billingAddress, taxesAmount, shippingAmount, handlingFee, processingFee, corePrice, addressType, companyName, poStatus, poSentAt, poConfirmAt, yardInfo, metadata, idempotencyKey, invoiceSentAt, invoiceStatus, invoiceConfirmedAt, warranty, orderCategoryStatus, problematicIssueType, pictureUrl, pictureStatus, } = payload;
         const mappedAddressType = typeof addressType === "string"

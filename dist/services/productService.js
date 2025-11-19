@@ -477,7 +477,7 @@ const createListing = async (params) => {
                 heading1: createData.heading1 ?? null,
                 heading2: createData.heading2 ?? null,
                 category: createData.category ?? null,
-                warranty: createData.warranty ?? null,
+                warranty: createData.warranty ?? "90 Days",
                 miles: "N/A",
                 actualprice: 0,
                 discountedPrice: 0,
@@ -486,6 +486,10 @@ const createListing = async (params) => {
                 description: null,
                 title: null,
                 specification: specification || null,
+                seoTitle: null,
+                seoSlug: null,
+                seoCanonical: null,
+                seoDescription: null,
             },
         });
         console.log("productvariant_1:", productvariant_1);
@@ -555,6 +559,20 @@ const createVariant = async (productId, payload) => {
             title: payload.title ?? null,
             description: payload.description ?? null,
             product_img: null,
+            seoTitle: payload.seoTitle ?? null,
+            seoSlug: payload.seoSlug ?? null,
+            seoCanonical: payload.seoCanonical ?? null,
+            seoDescription: payload.seoDescription ?? null,
+            googleProductCategory: payload.googleProductCategory,
+            productType: payload.productType,
+            customLabel1: payload.customLabel1,
+            customLabel2: payload.customLabel2,
+            customLabel3: payload.customLabel3,
+            customLabel4: payload.customLabel4,
+            itemGroupId: payload.itemGroupId,
+            promotionId: payload.promotionId,
+            displayInGoogleFeed: payload.displayInGoogleFeed,
+            googleProductHighlights: payload.googleProductHighlights,
         },
     });
     // Update product stock to reflect variant
@@ -597,6 +615,20 @@ const updateVariant = async (variantId, payload) => {
             description: payload.description !== undefined
                 ? payload.description
                 : existing.description,
+            seoTitle: payload.seoTitle ?? existing.seoTitle,
+            seoSlug: payload.seoSlug ?? existing.seoSlug,
+            seoCanonical: payload.seoCanonical ?? existing.seoCanonical,
+            seoDescription: payload.seoDescription ?? existing.seoDescription,
+            googleProductCategory: payload.googleProductCategory,
+            productType: payload.productType,
+            customLabel1: payload.customLabel1,
+            customLabel2: payload.customLabel2,
+            customLabel3: payload.customLabel3,
+            customLabel4: payload.customLabel4,
+            itemGroupId: payload.itemGroupId,
+            promotionId: payload.promotionId,
+            displayInGoogleFeed: payload.displayInGoogleFeed,
+            googleProductHighlights: payload.googleProductHighlights,
         },
     });
     // Optionally update product stock
