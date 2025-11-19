@@ -201,6 +201,7 @@ model OrderItem {
   
   @@index([orderId])
   @@index([productVariantId])
+  
 }
 
 model Payment {
@@ -517,13 +518,20 @@ model Lead {
   data       Json
 }
 
-model WebhookEvent {
-  id          String    @id @default(cuid())
-  provider    String    @default("stripe")  // You can store 'stripe', 'paypal', etc.
-  eventId     String    @unique             // Stripe event.id for deduplication
-  type        String?                       // e.g., 'payment_intent.succeeded'
-  payload     Json                           // The full JSON data received
-  receivedAt  DateTime  @default(now())
-  processed   Boolean   @default(false)      // Mark true after successful handling
-}
 
+
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  provider   String   @default("stripe")
+  eventId    String   @unique // Stripe event ID
+  type       String   // "payment_intent.succeeded"
+  payload    Json     // Full event data
+  processed  Boolean  @default(false)
+  receivedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  @@index([eventId])
+  @@index([type])
+  @@index([processed])
+}
