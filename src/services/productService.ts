@@ -1,7 +1,7 @@
 // import { prisma } from './prisma';
 
-import { prisma } from "./prisma";
-
+import { prisma  } from "./prisma";
+import { Prisma } from '@prisma/client';
 type VehicleQuery = { make: string; model: string; year: string; part: string };
 
 export const getProductsByVehicle = async ({
@@ -643,6 +643,7 @@ export const createVariant = async (
     promotionId?: string | null;
     displayInGoogleFeed?: string | null;
     googleProductHighlights?: string | null;
+    media?: Prisma.InputJsonValue;
   }
 ) => {
   const product = await prisma.product.findUnique({ where: { id: productId } });
@@ -679,7 +680,7 @@ export const createVariant = async (
       promotionId : payload.promotionId,
       displayInGoogleFeed : payload.displayInGoogleFeed,
       googleProductHighlights : payload.googleProductHighlights,
-
+      media: payload.media,
     },
   });
 
@@ -720,7 +721,7 @@ export const updateVariant = async (
     promotionId?: string | null;
     displayInGoogleFeed?: string | null;
     googleProductHighlights?: string | null;
-  
+    media?: Prisma.InputJsonValue ;
   }
 ) => {
   // Ensure variant exists
@@ -773,6 +774,7 @@ export const updateVariant = async (
       promotionId : payload.promotionId,
       displayInGoogleFeed : payload.displayInGoogleFeed,
       googleProductHighlights : payload.googleProductHighlights,
+      media: payload.media,
     },
   });
 

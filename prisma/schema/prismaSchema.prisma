@@ -492,7 +492,7 @@ model ProductVariant_1 {
   promotionId             String?
   displayInGoogleFeed     String?
   googleProductHighlights String?
-
+  media                  Json?
 
 }
 
