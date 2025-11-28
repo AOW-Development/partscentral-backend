@@ -573,6 +573,7 @@ const createVariant = async (productId, payload) => {
             promotionId: payload.promotionId,
             displayInGoogleFeed: payload.displayInGoogleFeed,
             googleProductHighlights: payload.googleProductHighlights,
+            media: payload.media,
         },
     });
     // Update product stock to reflect variant
@@ -629,6 +630,7 @@ const updateVariant = async (variantId, payload) => {
             promotionId: payload.promotionId,
             displayInGoogleFeed: payload.displayInGoogleFeed,
             googleProductHighlights: payload.googleProductHighlights,
+            media: payload.media,
         },
     });
     // Optionally update product stock
