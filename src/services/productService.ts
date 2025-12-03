@@ -228,6 +228,7 @@ export const getAllProducts = async (
     year?: string;
     part?: string;
     search?: string;
+    makeSortOrder?: "asc" | "desc";
   }
 ) => {
   const skip = (page - 1) * limit;
@@ -322,6 +323,21 @@ export const getAllProducts = async (
       }));
     }
   }
+  const orderBy: any = {};
+
+  if (filters?.makeSortOrder) {
+    // Sort by make name
+    orderBy.modelYear = {
+      model: {
+        make: {
+          name: filters.makeSortOrder, // "asc" or "desc"
+        },
+      },
+    };
+  } else {
+    // Default order by id descending
+    orderBy.id = "desc";
+  }
 
   const [products, total] = await Promise.all([
     prisma.product.findMany({
@@ -344,9 +360,7 @@ export const getAllProducts = async (
         variants: true,
         images: true,
       },
-      orderBy: {
-        id: "desc",
-      },
+      orderBy,
     }),
     prisma.product.count({ where }),
   ]);

@@ -158,13 +158,26 @@ exports.getAllProducts = async (req: Request, res: Response) => {
     const limit = parseInt(String(req.query.limit)) || 50;
 
     // Extract filter parameters
-    const filters = {
+    const filters: {
+      make?: string;
+      model?: string;
+      year?: string;
+      part?: string;
+      search?: string;
+      makeSortOrder?: "asc" | "desc";
+    } = {
       make: req.query.make ? String(req.query.make) : undefined,
       model: req.query.model ? String(req.query.model) : undefined,
       year: req.query.year ? String(req.query.year) : undefined,
       part: req.query.part ? String(req.query.part) : undefined,
       search: req.query.search ? String(req.query.search) : undefined,
     };
+
+    // Validate makeSortOrder
+    const makeSortOrder = String(req.query.makeSortOrder || "").toLowerCase();
+    if (makeSortOrder === "asc" || makeSortOrder === "desc") {
+      filters.makeSortOrder = makeSortOrder;
+    }
 
     const result = await productService.getAllProducts(page, limit, filters);
     res.json(result);
