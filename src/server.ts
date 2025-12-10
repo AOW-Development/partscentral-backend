@@ -39,7 +39,7 @@ app.use(
 );
 
 app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true })); 
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
@@ -48,8 +48,19 @@ app.use("/api/yards", yardRoutes);
 app.use("/api/problematic-parts", problematicPartRoutes);
 app.use("/api/webhooks", webhookRoutes);
 
+// Health check route
+app.get("/health", function (req, res) {
+  res.status(200).json({
+    status: "OK",
+    message: "Backerd jindaa hai",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
 app.use("/api", uploadRoutes);
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
+  console.log("server started successfully");
   console.log(`Server running on port ${PORT}`);
 });

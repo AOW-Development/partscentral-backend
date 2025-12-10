@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { getIO } from '../utils/socket';
 import { MetaLead, CreateLeadData } from '../types/lead';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -12,16 +13,20 @@ export const getLeads = async () => {
   });
 };
 
-export const createLead = async (data: CreateLeadData) => {
+// Create manual lead
+export const createLead = async (data: any) => {
   const lead = await prisma.lead.create({
     data: {
-      lead_id: data.id,
-      form_id: data.form_id,
-      data: data.field_data as any,
+      lead_id: randomUUID(),
+      form_id: 'PCL_01',
+      data: data, // store EXACT object
     },
   });
+
+  getIO().emit('new-lead', lead);
   return lead;
 };
+//webhook processing
 
 export const processWebhook = async (payload: any) => {
   try {
@@ -60,6 +65,7 @@ export const processWebhook = async (payload: any) => {
     throw error;
   }
 };
+// META SYNC LEADS
 
 export const syncLeadsFromMeta = async (formId: string) => {
     const fetch = (await import('node-fetch')).default;
@@ -116,22 +122,27 @@ export const syncLeadsFromMeta = async (formId: string) => {
     return { newLeadsCount };
   };
 
+// Fetch single lead by DB id
 
 export const getLeadById = async (id: string) => {
-  return await prisma.lead.findUnique({
+  return prisma.lead.findUnique({
     where: { id: parseInt(id, 10) },
   });
 };
+// Update lead by DB id
 
 export const updateLead = async (id: string, data: any) => {
-  return await prisma.lead.update({
+  return prisma.lead.update({
     where: { id: parseInt(id, 10) },
-    data,
+    data: {
+      data: data, // overwrite with the object sent
+    },
   });
 };
+// Delete lead by DB id
 
 export const deleteLead = async (id: string) => {
-  return await prisma.lead.delete({
+  return prisma.lead.delete({
     where: { id: parseInt(id, 10) },
   });
 };

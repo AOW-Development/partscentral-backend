@@ -366,7 +366,7 @@ export const getAllProducts = async (
   ]);
 
   return {
-    products: products.map((p) => {
+    products: products.map((p: any) => {
       // Build specification from variant specification or subparts
       let specification = "";
 
@@ -375,7 +375,7 @@ export const getAllProducts = async (
       } else if (p.description) {
         specification = p.description;
       } else if (p.subParts.length > 0) {
-        specification = p.subParts.map((sp) => sp.name).join(", ");
+        specification = p.subParts.map((sp:any) => sp.name).join(", ");
       }
 
       return {
@@ -491,7 +491,7 @@ export const createListing = async (params: {
     // This ensures each specification gets its own product
     product =
       potentialProducts.find(
-        (p) => p.subParts.length === 1 && p.subParts[0].id === targetSubPart.id
+        (p: any) => p.subParts.length === 1 && p.subParts[0].id === targetSubPart.id
       ) || null;
   } else {
     // No specification provided - find product with same modelYear and partType with NO subParts
@@ -657,7 +657,7 @@ export const createVariant = async (
     promotionId?: string | null;
     displayInGoogleFeed?: string | null;
     googleProductHighlights?: string | null;
-    media?: Prisma.InputJsonValue;
+    media?: any;
   }
 ) => {
   const product = await prisma.product.findUnique({ where: { id: productId } });
@@ -735,7 +735,7 @@ export const updateVariant = async (
     promotionId?: string | null;
     displayInGoogleFeed?: string | null;
     googleProductHighlights?: string | null;
-    media?: Prisma.InputJsonValue ;
+    media?: any;
   }
 ) => {
   // Ensure variant exists
