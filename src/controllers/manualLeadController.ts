@@ -23,8 +23,12 @@ export const createLeadController = async (req: Request, res: Response) => {
 // Get all leads
 export const getAllLeadsController = async (req: Request, res: Response) => {
   try {
-    const leads = await getLeads();
-    res.status(200).json(leads);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const result = await getLeads(skip, limit);
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "Error fetching leads" });
   }

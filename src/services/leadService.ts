@@ -5,12 +5,27 @@ import { randomUUID } from "crypto";
 
 const prisma = new PrismaClient();
 
-export const getLeads = async () => {
-  return await prisma.lead.findMany({
-    orderBy: {
-      created_at: "desc",
+export const getLeads = async (skip: number = 0, take: number = 10) => {
+  const [leads, total] = await Promise.all([
+    prisma.lead.findMany({
+      orderBy: {
+        created_at: "desc",
+      },
+      skip,
+      take,
+    }),
+    prisma.lead.count(),
+  ]);
+
+  return {
+    data: leads,
+    pagination: {
+      total,
+      skip,
+      take,
+      pages: Math.ceil(total / take),
     },
-  });
+  };
 };
 
 // Create manual lead
